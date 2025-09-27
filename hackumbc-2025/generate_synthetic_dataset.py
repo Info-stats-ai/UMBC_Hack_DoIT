@@ -30,19 +30,19 @@ fake = Faker(['en_US'])
 # Output directory
 OUTPUT_DIR = "umbc_data"
 
-# Data Size Configuration
-NUM_STUDENTS = 500        # Reduced number of students for more focused data
-NUM_COURSES = 100         # Reduced number of courses for two departments
-NUM_FACULTY = 30          # Reduced number of faculty for two departments
-NUM_DEGREES = 4           # Two degrees per department (BS and BA)
-TERMS_TO_GENERATE = 12    # Number of academic terms to generate
-HISTORY_YEARS = 4         # Years of historical data
+# Data Size Configuration (minimal for fast prototyping)
+NUM_STUDENTS = 10
+NUM_COURSES = 5
+NUM_FACULTY = 2
+NUM_DEGREES = 2
+TERMS_TO_GENERATE = 2
+HISTORY_YEARS = 1
 
-# System Complexity
-AVG_COURSES_PER_STUDENT = 20    # Average number of courses each student has taken
-MAX_PREREQS_PER_COURSE = 3      # Maximum number of prerequisites per course
-AVG_COURSES_PER_DEGREE = 40     # Average courses needed for a degree
-AVG_REQUIREMENTS_PER_DEGREE = 5  # Average requirement groups per degree
+# System Complexity (minimal)
+AVG_COURSES_PER_STUDENT = 3
+MAX_PREREQS_PER_COURSE = 1
+AVG_COURSES_PER_DEGREE = 3
+AVG_REQUIREMENTS_PER_DEGREE = 1
 
 # Variation Settings
 LEARNING_STYLE_DISTRIBUTION = {
