@@ -11,10 +11,10 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
 if __name__ == "__main__":
-    print("🚀 Starting UMBC Academic Risk Predictor API...")
-    print("📍 Server will be available at: http://localhost:8000")
-    print("📚 API docs will be available at: http://localhost:8000/docs")
-    print("🌐 Frontend should connect to: http://localhost:8000")
+    print("Starting UMBC Academic Risk Predictor API...")
+    print("Server will be available at: http://localhost:8000")
+    print("API docs will be available at: http://localhost:8000/docs")
+    print("Frontend should connect to: http://localhost:8000")
     print("\nPress Ctrl+C to stop the server")
     
     uvicorn.run(

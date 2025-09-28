@@ -10,6 +10,7 @@ from neo4j import GraphDatabase
 import os
 from typing import Dict, Any, List
 import logging
+from study_groups_service import StudyGroupsService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +57,7 @@ if os.path.exists(frontend_path):
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "umbctest123"
+NEO4J_PASSWORD = "Harsh@0603"  # Default password - change this to your Neo4j password
 NEO4J_DB = "neo4j"
 
 # Load model
@@ -80,32 +81,48 @@ else:
         logger.warning("No model found! Please train the model first.")
 
 # Neo4j driver
+driver = None
 try:
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-    driver.verify_connectivity()
-    logger.info("Connected to Neo4j database")
+    # Check if Neo4j is available (optional dependency)
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+    result = sock.connect_ex(('127.0.0.1', 7687))
+    sock.close()
     
-    # Check dataset loading
-    try:
-        with driver.session(database=NEO4J_DB) as session:
-            total_nodes = session.run("MATCH (n) RETURN count(n) as count").single()["count"]
-            student_count = session.run("MATCH (s:Student) RETURN count(s) as count").single()["count"]
-            course_count = session.run("MATCH (c:Course) RETURN count(c) as count").single()["count"]
-            
-            print(f"📊 DATASET LOADED SUCCESSFULLY!")
-            print(f"   Total Nodes: {total_nodes}")
-            print(f"   Students: {student_count}")
-            print(f"   Courses: {course_count}")
-            logger.info(f"Dataset loaded - Total nodes: {total_nodes}, Students: {student_count}, Courses: {course_count}")
-            
-    except Exception as e:
-        print(f"❌ ERROR CHECKING DATASET: {e}")
-        logger.error(f"Error checking dataset: {e}")
+    if result == 0:  # Port is open
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver.verify_connectivity()
+        logger.info("Connected to Neo4j database")
+        
+        # Check dataset loading
+        try:
+            with driver.session(database=NEO4J_DB) as session:
+                total_nodes = session.run("MATCH (n) RETURN count(n) as count").single()["count"]
+                student_count = session.run("MATCH (s:Student) RETURN count(s) as count").single()["count"]
+                course_count = session.run("MATCH (c:Course) RETURN count(c) as count").single()["count"]
+                
+                print(f"DATASET LOADED SUCCESSFULLY!")
+                print(f"   Total Nodes: {total_nodes}")
+                print(f"   Students: {student_count}")
+                print(f"   Courses: {course_count}")
+                logger.info(f"Dataset loaded - Total nodes: {total_nodes}, Students: {student_count}, Courses: {course_count}")
+                
+        except Exception as e:
+            print(f"ERROR CHECKING DATASET: {e}")
+            logger.error(f"Error checking dataset: {e}")
+    else:
+        print("NEO4J NOT AVAILABLE: Neo4j server is not running on localhost:7687")
+        logger.warning("Neo4j server not available, running without graph database features")
         
 except Exception as e:
     driver = None
     logger.error(f"Failed to connect to Neo4j: {e}")
-    print(f"❌ NEO4J CONNECTION FAILED: {e}")
+    print(f"NEO4J CONNECTION FAILED: {e}")
+    print("CONTINUING WITHOUT NEO4J: Server will run with limited functionality")
+
+# Initialize Study Groups Service
+study_groups_service = StudyGroupsService(neo4j_driver=driver)
 
 # Pydantic models
 class PredictionRequest(BaseModel):
@@ -126,6 +143,40 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     neo4j_connected: bool
     features_count: int
+
+class StudyPartnerRequest(BaseModel):
+    student_id: str
+    course_id: str
+    max_partners: int = 10
+
+class StudyPartnerResponse(BaseModel):
+    student_id: str
+    name: str
+    learning_style: str
+    current_courses: List[str]
+    completed_courses: List[str]
+    performance_level: str
+    preferred_pace: str
+    work_hours: int
+    instruction_mode: str
+    compatibility_score: float
+    compatibility_factors: Dict[str, float]
+
+class StudyGroupResponse(BaseModel):
+    group_id: str
+    course_id: str
+    course_name: str
+    members: List[StudyPartnerResponse]
+    avg_compatibility: float
+    recommended_meeting_time: str
+    group_size: int
+    learning_style_diversity: float
+    performance_balance: float
+
+class StudyGroupsRequest(BaseModel):
+    course_id: str
+    min_group_size: int = 3
+    max_group_size: int = 5
 
 # Helper functions
 def get_student_course_features(student_id: str, course_id: str) -> pd.DataFrame:
@@ -256,6 +307,30 @@ async def serve_student_options_html():
 async def get_student_options_script():
     return FileResponse(os.path.join("..", "frontend", "student-options.js"))
 
+@app.get("/study-groups")
+async def serve_study_groups():
+    """Serve the study groups page"""
+    study_groups_file = os.path.join("..", "frontend", "study-groups.html")
+    if os.path.exists(study_groups_file):
+        return FileResponse(study_groups_file)
+    return {"message": "Study groups page not found"}
+
+@app.get("/study-groups.html")
+async def serve_study_groups_html():
+    """Serve the study groups page with .html extension"""
+    study_groups_file = os.path.join("..", "frontend", "study-groups.html")
+    if os.path.exists(study_groups_file):
+        return FileResponse(study_groups_file)
+    return {"message": "Study groups page not found"}
+
+@app.get("/study-groups.css")
+async def get_study_groups_styles():
+    return FileResponse(os.path.join("..", "frontend", "study-groups.css"))
+
+@app.get("/study-groups.js")
+async def get_study_groups_script():
+    return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -343,6 +418,115 @@ async def get_available_courses():
         courses = [record["course_id"] for record in result]
     
     return {"courses": courses}
+
+# Study Groups API endpoints
+@app.post("/study-partners", response_model=List[StudyPartnerResponse])
+async def find_study_partners(request: StudyPartnerRequest):
+    """Find compatible study partners for a student in a course"""
+    try:
+        partners = study_groups_service.find_study_partners(
+            request.student_id, 
+            request.course_id, 
+            request.max_partners
+        )
+        
+        # Convert to response format
+        partner_responses = []
+        for partner in partners:
+            partner_response = StudyPartnerResponse(
+                student_id=partner.student_id,
+                name=partner.name,
+                learning_style=partner.learning_style,
+                current_courses=partner.current_courses,
+                completed_courses=partner.completed_courses,
+                performance_level=partner.performance_level,
+                preferred_pace=partner.preferred_pace,
+                work_hours=partner.work_hours,
+                instruction_mode=partner.instruction_mode,
+                compatibility_score=partner.compatibility_score,
+                compatibility_factors=partner.compatibility_factors
+            )
+            partner_responses.append(partner_response)
+        
+        return partner_responses
+        
+    except Exception as e:
+        logger.error(f"Error finding study partners: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to find study partners: {str(e)}")
+
+@app.post("/study-groups", response_model=List[StudyGroupResponse])
+async def create_study_groups(request: StudyGroupsRequest):
+    """Create optimal study groups for a course"""
+    try:
+        groups = study_groups_service.create_study_groups(
+            request.course_id,
+            request.min_group_size,
+            request.max_group_size
+        )
+        
+        # Convert to response format
+        group_responses = []
+        for group in groups:
+            member_responses = []
+            for member in group.members:
+                member_response = StudyPartnerResponse(
+                    student_id=member.student_id,
+                    name=member.name,
+                    learning_style=member.learning_style,
+                    current_courses=member.current_courses,
+                    completed_courses=member.completed_courses,
+                    performance_level=member.performance_level,
+                    preferred_pace=member.preferred_pace,
+                    work_hours=member.work_hours,
+                    instruction_mode=member.instruction_mode,
+                    compatibility_score=member.compatibility_score,
+                    compatibility_factors=member.compatibility_factors
+                )
+                member_responses.append(member_response)
+            
+            group_response = StudyGroupResponse(
+                group_id=group.group_id,
+                course_id=group.course_id,
+                course_name=group.course_name,
+                members=member_responses,
+                avg_compatibility=group.avg_compatibility,
+                recommended_meeting_time=group.recommended_meeting_time,
+                group_size=group.group_size,
+                learning_style_diversity=group.learning_style_diversity,
+                performance_balance=group.performance_balance
+            )
+            group_responses.append(group_response)
+        
+        return group_responses
+        
+    except Exception as e:
+        logger.error(f"Error creating study groups: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create study groups: {str(e)}")
+
+@app.get("/study-groups/course/{course_id}")
+async def get_study_groups_for_course(course_id: str):
+    """Get existing study groups for a specific course"""
+    try:
+        groups = study_groups_service.create_study_groups(course_id)
+        
+        return {
+            "course_id": course_id,
+            "total_groups": len(groups),
+            "groups": [
+                {
+                    "group_id": group.group_id,
+                    "member_count": group.group_size,
+                    "avg_compatibility": round(group.avg_compatibility, 2),
+                    "meeting_time": group.recommended_meeting_time,
+                    "learning_diversity": round(group.learning_style_diversity, 2)
+                }
+                for group in groups
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting study groups for course {course_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get study groups: {str(e)}")
 
 # Dashboard API endpoints
 @app.get("/dashboard")
