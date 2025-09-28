@@ -1,174 +1,139 @@
-// Student Advisor Dashboard JavaScript
+// Dashboard JavaScript - Real-time Academic Analytics Dashboard
 
-class AdvisorDashboard {
+class AcademicDashboard {
     constructor() {
-        this.currentTab = 'overview';
+        this.apiBaseUrl = 'http://localhost:8000';
         this.charts = {};
-        this.sampleData = this.generateSampleData();
+        this.updateInterval = null;
+        this.isLoading = false;
+        this.currentStudentId = null;
+        
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        this.loadOverviewData();
-        this.initializeCharts();
+        this.loadInitialData();
+        this.startRealTimeUpdates();
+        this.setupCharts();
     }
 
     setupEventListeners() {
-        // Tab navigation
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
-            });
+        // Search functionality
+        const studentSearch = document.getElementById('studentSearch');
+        studentSearch.addEventListener('input', this.debounce(this.handleStudentSearch.bind(this), 300));
+
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshData');
+        refreshBtn.addEventListener('click', () => this.loadInitialData());
+
+        // Student analysis
+        const analyzeBtn = document.getElementById('analyzeStudentBtn');
+        analyzeBtn.addEventListener('click', this.analyzeStudent.bind(this));
+
+        const studentIdInput = document.getElementById('studentIdInput');
+        studentIdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.analyzeStudent();
+            }
         });
 
-        // Overview filters
-        document.getElementById('semesterSelect')?.addEventListener('change', () => {
-            this.loadOverviewData();
-        });
+        // Study groups
+        const generateGroupsBtn = document.getElementById('generateGroupsBtn');
+        generateGroupsBtn.addEventListener('click', this.generateStudyGroups.bind(this));
 
-        // Risk analysis filters
-        document.getElementById('riskLevelFilter')?.addEventListener('change', () => {
-            this.filterRiskStudents();
-        });
+        // Chart filters
+        const performanceFilter = document.getElementById('performanceFilter');
+        performanceFilter.addEventListener('change', () => this.updatePerformanceChart());
 
-        document.getElementById('departmentFilter')?.addEventListener('change', () => {
-            this.filterRiskStudents();
-        });
+        const courseFilter = document.getElementById('courseFilter');
+        courseFilter.addEventListener('change', () => this.updateCourseSuccessChart());
 
-        // Course path generation
-        document.getElementById('generatePathBtn')?.addEventListener('click', () => {
-            this.generateOptimalCoursePath();
-        });
-
-        document.getElementById('majorSelect')?.addEventListener('change', () => {
-            this.generateOptimalCoursePath();
-        });
-
-        // Study group generation
-        document.getElementById('generateGroupsBtn')?.addEventListener('click', () => {
-            this.generateStudyGroups();
-        });
-
-        // Prediction controls
-        document.getElementById('refreshPredictionsBtn')?.addEventListener('click', () => {
-            this.refreshPredictions();
-        });
-
-        document.getElementById('exportPredictionsBtn')?.addEventListener('click', () => {
-            this.exportPredictions();
-        });
+        // Error modal
+        const closeErrorBtn = document.getElementById('closeErrorBtn');
+        closeErrorBtn.addEventListener('click', () => this.hideErrorModal());
     }
 
-    switchTab(tabName) {
-        // Update nav tabs
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(tabName).classList.add('active');
-
-        this.currentTab = tabName;
-
-        // Load tab-specific data
-        switch(tabName) {
-            case 'overview':
-                this.loadOverviewData();
-                break;
-            case 'risk-analysis':
-                this.loadRiskAnalysisData();
-                break;
-            case 'course-paths':
-                this.generateOptimalCoursePath();
-                break;
-            case 'study-groups':
-                this.generateStudyGroups();
-                break;
-            case 'predictions':
-                this.loadPredictionData();
-                break;
+    async loadInitialData() {
+        if (this.isLoading) return;
+        
+        this.showLoading();
+        try {
+            await Promise.all([
+                this.loadOverviewData(),
+                this.loadChartData(),
+                this.loadCoursesForStudyGroups()
+            ]);
+            this.updateLastUpdatedTime();
+            this.addUpdate('Dashboard data refreshed successfully', 'success');
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            this.showError('Failed to load dashboard data. Please try again.');
+            this.addUpdate('Error loading dashboard data', 'error');
+        } finally {
+            this.hideLoading();
         }
     }
 
-    generateSampleData() {
-        return {
-            students: [
-                { id: 'ZO28124', name: 'Alex Johnson', major: 'Computer Science', gpa: 3.2, risk: 'high' },
-                { id: 'XN08759', name: 'Sarah Chen', major: 'Mathematics', gpa: 3.8, risk: 'low' },
-                { id: 'EY56522', name: 'Michael Brown', major: 'Biology', gpa: 2.9, risk: 'medium' },
-                { id: 'PX26385', name: 'Emily Davis', major: 'Computer Science', gpa: 3.5, risk: 'low' },
-                { id: 'XE28807', name: 'David Wilson', major: 'Engineering', gpa: 2.7, risk: 'high' },
-                { id: 'OU90944', name: 'Lisa Garcia', major: 'Mathematics', gpa: 3.1, risk: 'medium' },
-                { id: 'EL31170', name: 'James Miller', major: 'Biology', gpa: 3.6, risk: 'low' },
-                { id: 'KH74592', name: 'Maria Rodriguez', major: 'Computer Science', gpa: 2.8, risk: 'high' }
-            ],
-            courses: [
-                { code: 'CSEE 200', name: 'Introduction to Programming', credits: 3, difficulty: 'medium' },
-                { code: 'MATH 151', name: 'Calculus I', credits: 4, difficulty: 'hard' },
-                { code: 'BIOL 141', name: 'General Biology', credits: 4, difficulty: 'medium' },
-                { code: 'CSEE 201', name: 'Data Structures', credits: 3, difficulty: 'hard' },
-                { code: 'MATH 152', name: 'Calculus II', credits: 4, difficulty: 'hard' }
-            ],
-            studyGroups: [
-                {
-                    name: 'Group Alpha',
-                    course: 'CSEE 200',
-                    members: ['Student A (Visual)', 'Student B (Auditory)', 'Student C (Kinesthetic)'],
-                    compatibility: 92,
-                    avgGpa: 3.2,
-                    meetingTime: 'Tue/Thu 2-4 PM'
-                },
-                {
-                    name: 'Group Beta',
-                    course: 'MATH 151',
-                    members: ['Student D (Visual)', 'Student E (Reading)', 'Student F (Kinesthetic)'],
-                    compatibility: 88,
-                    avgGpa: 3.4,
-                    meetingTime: 'Mon/Wed 3-5 PM'
-                },
-                {
-                    name: 'Group Gamma',
-                    course: 'BIOL 141',
-                    members: ['Student G (Auditory)', 'Student H (Visual)', 'Student I (Reading)'],
-                    compatibility: 85,
-                    avgGpa: 3.1,
-                    meetingTime: 'Fri 1-3 PM'
-                }
-            ]
-        };
-    }
-
-    loadOverviewData() {
-        // Update metrics
-        document.getElementById('totalStudents').textContent = this.sampleData.students.length;
-        document.getElementById('atRiskStudents').textContent = 
-            this.sampleData.students.filter(s => s.risk === 'high').length;
-        document.getElementById('successRate').textContent = '87%';
-        document.getElementById('avgGPA').textContent = '3.2';
-
-        // Update charts
-        this.updateGradeChart();
-        this.updateDepartmentChart();
-    }
-
-    updateGradeChart() {
-        const ctx = document.getElementById('gradeChart');
-        if (this.charts.gradeChart) {
-            this.charts.gradeChart.destroy();
+    async loadOverviewData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/dashboard/overview`);
+            if (!response.ok) throw new Error('Failed to load overview data');
+            
+            const data = await response.json();
+            this.updateOverviewCards(data);
+        } catch (error) {
+            console.error('Error loading overview data:', error);
+            throw error;
         }
+    }
 
-        this.charts.gradeChart = new Chart(ctx, {
+    async loadChartData() {
+        try {
+            const [atRiskData, predictionsData] = await Promise.all([
+                fetch(`${this.apiBaseUrl}/dashboard/at-risk-students`).then(r => r.json()),
+                fetch(`${this.apiBaseUrl}/dashboard/predictions`).then(r => r.json())
+            ]);
+
+            this.updatePerformanceChart(atRiskData);
+            this.updateCourseSuccessChart(predictionsData);
+            this.updateLearningStyleChart();
+            this.updateRiskFactorsChart(predictionsData);
+        } catch (error) {
+            console.error('Error loading chart data:', error);
+            throw error;
+        }
+    }
+
+    async loadCoursesForStudyGroups() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/courses`);
+            if (!response.ok) throw new Error('Failed to load courses');
+            
+            const data = await response.json();
+            this.populateCourseSelect(data.courses);
+        } catch (error) {
+            console.error('Error loading courses:', error);
+        }
+    }
+
+    updateOverviewCards(data) {
+        document.getElementById('totalStudents').textContent = data.total_students || '--';
+        document.getElementById('totalCourses').textContent = data.total_courses || '--';
+        document.getElementById('successRate').textContent = `${data.success_rate || 0}%`;
+        document.getElementById('atRiskCount').textContent = data.at_risk_students || '--';
+    }
+
+    setupCharts() {
+        // Performance Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        this.charts.performance = new Chart(performanceCtx, {
             type: 'doughnut',
             data: {
-                labels: ['A', 'B', 'C', 'D', 'F'],
+                labels: ['High Risk', 'Medium Risk', 'Low Risk'],
                 datasets: [{
-                    data: [25, 35, 20, 15, 5],
-                    backgroundColor: ['#38a169', '#68d391', '#f6e05e', '#f6ad55', '#e53e3e'],
+                    data: [0, 0, 0],
+                    backgroundColor: ['#e74c3c', '#f39c12', '#27ae60'],
                     borderWidth: 0
                 }]
             },
@@ -177,251 +142,28 @@ class AdvisorDashboard {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
                     }
                 }
             }
         });
-    }
 
-    updateDepartmentChart() {
-        const ctx = document.getElementById('departmentChart');
-        if (this.charts.departmentChart) {
-            this.charts.departmentChart.destroy();
-        }
-
-        this.charts.departmentChart = new Chart(ctx, {
+        // Course Success Chart
+        const courseSuccessCtx = document.getElementById('courseSuccessChart').getContext('2d');
+        this.charts.courseSuccess = new Chart(courseSuccessCtx, {
             type: 'bar',
             data: {
-                labels: ['Computer Science', 'Mathematics', 'Biology', 'Engineering'],
+                labels: [],
                 datasets: [{
-                    label: 'Average GPA',
-                    data: [3.4, 3.6, 3.2, 3.1],
-                    backgroundColor: '#667eea',
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 4.0
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-    }
-
-    loadRiskAnalysisData() {
-        const riskCounts = {
-            high: this.sampleData.students.filter(s => s.risk === 'high').length,
-            medium: this.sampleData.students.filter(s => s.risk === 'medium').length,
-            low: this.sampleData.students.filter(s => s.risk === 'low').length
-        };
-
-        document.getElementById('highRiskCount').textContent = riskCounts.high;
-        document.getElementById('mediumRiskCount').textContent = riskCounts.medium;
-        document.getElementById('lowRiskCount').textContent = riskCounts.low;
-
-        this.updateRiskStudentsTable();
-    }
-
-    updateRiskStudentsTable() {
-        const tbody = document.getElementById('riskStudentsTable');
-        const filteredStudents = this.filterRiskStudents();
-
-        tbody.innerHTML = filteredStudents.map(student => {
-            const riskFactors = this.getRiskFactors(student);
-            const recommendations = this.getRecommendations(student.risk);
-
-            return `
-                <tr>
-                    <td>${student.id}</td>
-                    <td>${student.name}</td>
-                    <td>${student.major}</td>
-                    <td><span class="risk-badge ${student.risk}">${student.risk.toUpperCase()}</span></td>
-                    <td>${student.gpa}</td>
-                    <td>${riskFactors.join(', ')}</td>
-                    <td>${recommendations.join(', ')}</td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    filterRiskStudents() {
-        const riskFilter = document.getElementById('riskLevelFilter')?.value || 'all';
-        const departmentFilter = document.getElementById('departmentFilter')?.value || 'all';
-
-        return this.sampleData.students.filter(student => {
-            const riskMatch = riskFilter === 'all' || student.risk === riskFilter;
-            const departmentMatch = departmentFilter === 'all' || 
-                student.major.toLowerCase().includes(departmentFilter.toLowerCase());
-            return riskMatch && departmentMatch;
-        });
-    }
-
-    getRiskFactors(student) {
-        const factors = [];
-        if (student.gpa < 3.0) factors.push('Low GPA');
-        if (student.gpa < 2.5) factors.push('Academic Probation');
-        if (student.risk === 'high') factors.push('Multiple Failed Courses');
-        if (student.risk === 'medium') factors.push('Declining Performance');
-        return factors.length > 0 ? factors : ['No Major Risk Factors'];
-    }
-
-    getRecommendations(riskLevel) {
-        switch(riskLevel) {
-            case 'high':
-                return ['Immediate Advisor Meeting', 'Academic Support Services', 'Tutoring'];
-            case 'medium':
-                return ['Monitor Closely', 'Study Skills Workshop', 'Peer Mentoring'];
-            case 'low':
-                return ['Maintain Current Support', 'Optional Enrichment'];
-            default:
-                return ['Continue Current Path'];
-        }
-    }
-
-    generateOptimalCoursePath() {
-        const major = document.getElementById('majorSelect')?.value || 'computer-science';
-        
-        // Update path metrics
-        document.getElementById('totalCredits').textContent = '120';
-        document.getElementById('estimatedDuration').textContent = '4 years';
-        document.getElementById('successProbability').textContent = '87%';
-
-        // Create course path visualization
-        this.createCoursePathVisualization(major);
-    }
-
-    createCoursePathVisualization(major) {
-        const diagram = document.getElementById('coursePathDiagram');
-        
-        // Sample course sequences based on major
-        const paths = {
-            'computer-science': [
-                { semester: 'Fall Year 1', courses: ['CSEE 200', 'MATH 151', 'ENGL 100'] },
-                { semester: 'Spring Year 1', courses: ['CSEE 201', 'MATH 152', 'PHYS 121'] },
-                { semester: 'Fall Year 2', courses: ['CSEE 301', 'MATH 251', 'CSEE 300'] },
-                { semester: 'Spring Year 2', courses: ['CSEE 302', 'CSEE 400', 'MATH 301'] }
-            ],
-            'mathematics': [
-                { semester: 'Fall Year 1', courses: ['MATH 151', 'PHYS 121', 'ENGL 100'] },
-                { semester: 'Spring Year 1', courses: ['MATH 152', 'MATH 221', 'CSEE 200'] },
-                { semester: 'Fall Year 2', courses: ['MATH 251', 'MATH 301', 'MATH 221'] },
-                { semester: 'Spring Year 2', courses: ['MATH 302', 'MATH 401', 'STAT 355'] }
-            ]
-        };
-
-        const selectedPath = paths[major] || paths['computer-science'];
-        
-        diagram.innerHTML = `
-            <div class="path-timeline">
-                ${selectedPath.map(semester => `
-                    <div class="semester-block">
-                        <h4>${semester.semester}</h4>
-                        <div class="courses">
-                            ${semester.courses.map(course => `
-                                <div class="course-item">${course}</div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Add some basic styling
-        const style = document.createElement('style');
-        style.textContent = `
-            .path-timeline {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-                width: 100%;
-            }
-            .semester-block {
-                background: #f7fafc;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #667eea;
-            }
-            .semester-block h4 {
-                margin: 0 0 10px 0;
-                color: #2d3748;
-            }
-            .courses {
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-            }
-            .course-item {
-                background: white;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 0.9rem;
-                color: #4a5568;
-                border: 1px solid #e2e8f0;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    generateStudyGroups() {
-        // This would typically make an API call to generate study groups
-        // For now, we'll use the sample data
-        console.log('Generating study groups...');
-        
-        // Update the study groups display with sample data
-        const groupsGrid = document.querySelector('.study-groups-grid');
-        if (groupsGrid) {
-            groupsGrid.innerHTML = this.sampleData.studyGroups.map(group => `
-                <div class="study-group-card">
-                    <h4>${group.name} - ${group.course}</h4>
-                    <div class="group-members">
-                        ${group.members.map(member => `<div class="member">${member}</div>`).join('')}
-                    </div>
-                    <div class="group-metrics">
-                        <div class="metric">Compatibility: ${group.compatibility}%</div>
-                        <div class="metric">Avg GPA: ${group.avgGpa}</div>
-                        <div class="metric">Meeting Time: ${group.meetingTime}</div>
-                    </div>
-                    <div class="group-actions">
-                        <button class="action-btn primary">Schedule Meeting</button>
-                        <button class="action-btn secondary">View Details</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
-
-    loadPredictionData() {
-        // Update prediction insights and charts
-        this.updateSuccessProbabilityChart();
-        this.updateRiskFactorChart();
-    }
-
-    updateSuccessProbabilityChart() {
-        const ctx = document.getElementById('successProbabilityChart');
-        if (this.charts.successProbabilityChart) {
-            this.charts.successProbabilityChart.destroy();
-        }
-
-        this.charts.successProbabilityChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['CSEE 200', 'MATH 151', 'BIOL 141', 'CSEE 201', 'MATH 152'],
-                datasets: [{
-                    label: 'Success Probability (%)',
-                    data: [89, 76, 82, 85, 71],
-                    backgroundColor: ['#38a169', '#e53e3e', '#d69e2e', '#38a169', '#e53e3e'],
-                    borderRadius: 8
+                    label: 'Success Rate (%)',
+                    data: [],
+                    backgroundColor: '#3498db',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -440,21 +182,16 @@ class AdvisorDashboard {
                 }
             }
         });
-    }
 
-    updateRiskFactorChart() {
-        const ctx = document.getElementById('riskFactorChart');
-        if (this.charts.riskFactorChart) {
-            this.charts.riskFactorChart.destroy();
-        }
-
-        this.charts.riskFactorChart = new Chart(ctx, {
-            type: 'doughnut',
+        // Learning Style Chart
+        const learningStyleCtx = document.getElementById('learningStyleChart').getContext('2d');
+        this.charts.learningStyle = new Chart(learningStyleCtx, {
+            type: 'pie',
             data: {
-                labels: ['Low GPA', 'Missing Prerequisites', 'Course Load', 'Attendance', 'Other'],
+                labels: ['Visual', 'Auditory', 'Kinesthetic', 'Reading-Writing'],
                 datasets: [{
-                    data: [35, 25, 20, 15, 5],
-                    backgroundColor: ['#e53e3e', '#d69e2e', '#f6e05e', '#68d391', '#a0aec0'],
+                    data: [35, 25, 30, 10],
+                    backgroundColor: ['#9b59b6', '#3498db', '#e67e22', '#2ecc71'],
                     borderWidth: 0
                 }]
             },
@@ -463,32 +200,381 @@ class AdvisorDashboard {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Risk Factors Chart
+        const riskFactorsCtx = document.getElementById('riskFactorsChart').getContext('2d');
+        this.charts.riskFactors = new Chart(riskFactorsCtx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Percentage',
+                    data: [],
+                    backgroundColor: '#e74c3c',
+                    borderColor: '#c0392b',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
                     }
                 }
             }
         });
     }
 
-    refreshPredictions() {
-        console.log('Refreshing predictions...');
-        // This would typically make an API call to refresh predictions
-        this.loadPredictionData();
+    updatePerformanceChart(atRiskData) {
+        if (!atRiskData) return;
+        
+        const data = [
+            atRiskData.high_risk || 0,
+            atRiskData.medium_risk || 0,
+            atRiskData.low_risk || 0
+        ];
+        
+        this.charts.performance.data.datasets[0].data = data;
+        this.charts.performance.update();
     }
 
-    exportPredictions() {
-        console.log('Exporting predictions...');
-        // This would typically export data to CSV or PDF
-        alert('Export functionality would be implemented here');
+    updateCourseSuccessChart(predictionsData) {
+        if (!predictionsData || !predictionsData.success_probability_by_course) return;
+        
+        const courses = predictionsData.success_probability_by_course.slice(0, 8);
+        const labels = courses.map(c => c.course);
+        const data = courses.map(c => c.probability);
+        
+        this.charts.courseSuccess.data.labels = labels;
+        this.charts.courseSuccess.data.datasets[0].data = data;
+        this.charts.courseSuccess.update();
     }
 
-    initializeCharts() {
-        // Initialize any charts that need to be created immediately
-        console.log('Dashboard initialized');
+    updateLearningStyleChart() {
+        // This would typically come from the API, but we'll use sample data
+        const data = [35, 25, 30, 10];
+        this.charts.learningStyle.data.datasets[0].data = data;
+        this.charts.learningStyle.update();
+    }
+
+    updateRiskFactorsChart(predictionsData) {
+        if (!predictionsData || !predictionsData.risk_factors) return;
+        
+        const factors = predictionsData.risk_factors;
+        const labels = factors.map(f => f.factor);
+        const data = factors.map(f => f.percentage);
+        
+        this.charts.riskFactors.data.labels = labels;
+        this.charts.riskFactors.data.datasets[0].data = data;
+        this.charts.riskFactors.update();
+    }
+
+    async analyzeStudent() {
+        const studentId = document.getElementById('studentIdInput').value.trim();
+        if (!studentId) {
+            this.showError('Please enter a student ID');
+            return;
+        }
+
+        this.showLoading();
+        try {
+            const studentData = await this.getStudentData(studentId);
+            this.displayStudentAnalysis(studentData);
+            this.currentStudentId = studentId;
+            this.addUpdate(`Analyzed student ${studentId}`, 'info');
+        } catch (error) {
+            console.error('Error analyzing student:', error);
+            this.showError(`Student ${studentId} not found or error occurred`);
+            this.addUpdate(`Error analyzing student ${studentId}`, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async getStudentData(studentId) {
+        const response = await fetch(`${this.apiBaseUrl}/api/student/${studentId}`);
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Student not found');
+            }
+            throw new Error('Failed to load student data');
+        }
+        return await response.json();
+    }
+
+    displayStudentAnalysis(studentData) {
+        const content = document.getElementById('studentDetailsContent');
+        
+        const analysisHTML = `
+            <div class="student-analysis">
+                <div class="student-info">
+                    <h4>Student Information</h4>
+                    <div class="info-item">
+                        <span class="info-label">Student ID:</span>
+                        <span class="info-value">${studentData.id}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Name:</span>
+                        <span class="info-value">${studentData.name}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Major:</span>
+                        <span class="info-value">${studentData.major}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Year:</span>
+                        <span class="info-value">${studentData.year}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">GPA:</span>
+                        <span class="info-value">${studentData.gpa}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Risk Level:</span>
+                        <span class="info-value">
+                            <span class="risk-indicator ${studentData.risk}">${studentData.risk}</span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Credits Completed:</span>
+                        <span class="info-value">${studentData.creditsCompleted}</span>
+                    </div>
+                </div>
+                
+                <div class="student-info">
+                    <h4>Current Courses</h4>
+                    ${studentData.coursesThisSemester && studentData.coursesThisSemester.length > 0 
+                        ? studentData.coursesThisSemester.map(course => `
+                            <div class="info-item">
+                                <span class="info-label">${course.code}:</span>
+                                <span class="info-value">${course.name} (${course.grade}%)</span>
+                            </div>
+                        `).join('')
+                        : '<p>No current courses</p>'
+                    }
+                    
+                    <h4 style="margin-top: 1rem;">Recommendations</h4>
+                    ${studentData.recommendations && studentData.recommendations.length > 0 
+                        ? `<ul style="margin-top: 0.5rem;">${studentData.recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>`
+                        : '<p>No specific recommendations</p>'
+                    }
+                </div>
+            </div>
+        `;
+        
+        content.innerHTML = analysisHTML;
+        content.classList.add('fade-in');
+    }
+
+    async generateStudyGroups() {
+        const courseId = document.getElementById('courseSelect').value;
+        if (!courseId) {
+            this.showError('Please select a course');
+            return;
+        }
+
+        this.showLoading();
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/study-groups`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    min_group_size: 3,
+                    max_group_size: 5
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to generate study groups');
+            
+            const groups = await response.json();
+            this.displayStudyGroups(groups);
+            this.addUpdate(`Generated study groups for ${courseId}`, 'success');
+        } catch (error) {
+            console.error('Error generating study groups:', error);
+            this.showError('Failed to generate study groups');
+            this.addUpdate(`Error generating study groups for ${courseId}`, 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    displayStudyGroups(groups) {
+        const content = document.getElementById('studyGroupsContent');
+        
+        if (!groups || groups.length === 0) {
+            content.innerHTML = '<p>No study groups available for this course.</p>';
+            return;
+        }
+
+        const groupsHTML = groups.map(group => `
+            <div class="study-group-card">
+                <div class="study-group-header">
+                    <span class="group-name">${group.group_id}</span>
+                    <span class="compatibility-score">${Math.round(group.avg_compatibility)}% Compatible</span>
+                </div>
+                <div class="group-members">
+                    ${group.members.map(member => `
+                        <span class="member-tag">${member.name}</span>
+                    `).join('')}
+                </div>
+                <div class="group-details">
+                    <div class="group-detail-item">
+                        <span class="group-detail-label">Course:</span>
+                        <span class="group-detail-value">${group.course_name}</span>
+                    </div>
+                    <div class="group-detail-item">
+                        <span class="group-detail-label">Meeting Time:</span>
+                        <span class="group-detail-value">${group.recommended_meeting_time}</span>
+                    </div>
+                    <div class="group-detail-item">
+                        <span class="group-detail-label">Group Size:</span>
+                        <span class="group-detail-value">${group.group_size} members</span>
+                    </div>
+                    <div class="group-detail-item">
+                        <span class="group-detail-label">Diversity:</span>
+                        <span class="group-detail-value">${Math.round(group.learning_style_diversity * 100)}%</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        content.innerHTML = groupsHTML;
+        content.classList.add('fade-in');
+    }
+
+    populateCourseSelect(courses) {
+        const select = document.getElementById('courseSelect');
+        select.innerHTML = '<option value="">Select a course...</option>';
+        
+        courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course;
+            option.textContent = course;
+            select.appendChild(option);
+        });
+    }
+
+    async handleStudentSearch(event) {
+        const query = event.target.value.trim();
+        if (query.length < 3) return;
+
+        try {
+            // This would typically search through available students
+            // For now, we'll just show a message
+            this.addUpdate(`Searching for students matching "${query}"`, 'info');
+        } catch (error) {
+            console.error('Error searching students:', error);
+        }
+    }
+
+    startRealTimeUpdates() {
+        // Update data every 30 seconds
+        this.updateInterval = setInterval(() => {
+            this.loadInitialData();
+        }, 30000);
+    }
+
+    addUpdate(message, type = 'info') {
+        const updatesList = document.getElementById('updatesList');
+        const updateItem = document.createElement('div');
+        updateItem.className = 'update-item';
+        
+        const icon = type === 'error' ? 'fa-exclamation-circle' : 
+                    type === 'success' ? 'fa-check-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        const color = type === 'error' ? '#e74c3c' : 
+                     type === 'success' ? '#27ae60' : 
+                     type === 'warning' ? '#f39c12' : '#3498db';
+        
+        updateItem.innerHTML = `
+            <i class="fas ${icon}" style="color: ${color}"></i>
+            <span>${message}</span>
+            <span class="update-time">${new Date().toLocaleTimeString()}</span>
+        `;
+        
+        updatesList.insertBefore(updateItem, updatesList.firstChild);
+        
+        // Keep only last 10 updates
+        while (updatesList.children.length > 10) {
+            updatesList.removeChild(updatesList.lastChild);
+        }
+    }
+
+    updateLastUpdatedTime() {
+        const timeElement = document.getElementById('lastUpdateTime');
+        timeElement.textContent = new Date().toLocaleTimeString();
+    }
+
+    showLoading() {
+        this.isLoading = true;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    hideLoading() {
+        this.isLoading = false;
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.remove('hidden');
+    }
+
+    hideErrorModal() {
+        document.getElementById('errorModal').classList.add('hidden');
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 }
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new AdvisorDashboard();
+    new AcademicDashboard();
 });
+
+// Handle page visibility changes to pause/resume updates
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Page is hidden, could pause updates here
+    } else {
+        // Page is visible, resume updates
+        if (window.dashboard) {
+            window.dashboard.loadInitialData();
+        }
+    }
+});
+
+// Export for global access
+window.AcademicDashboard = AcademicDashboard;

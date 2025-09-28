@@ -95,6 +95,28 @@ class DemoData {
     }
 }
 
+// Global function for accessing risk prediction
+function accessRiskPrediction() {
+    const studentIdInput = document.getElementById('studentId');
+    const studentId = studentIdInput ? studentIdInput.value.trim() : '';
+    
+    if (!studentId) {
+        alert('Please enter your Student ID first to access Risk Prediction');
+        studentIdInput.focus();
+        return;
+    }
+    
+    // Validate student ID format
+    if (!/^[A-Z0-9]{5,10}$/i.test(studentId)) {
+        alert('Please enter a valid Student ID format (e.g., ZO28124)');
+        studentIdInput.focus();
+        return;
+    }
+    
+    // Navigate to risk prediction page with student ID
+    window.location.href = `/risk-prediction?studentId=${encodeURIComponent(studentId)}`;
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     new StudentLogin();

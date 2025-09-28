@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Test - UMBC Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #5a67d8;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Backend Connection Test</h1>
+        <p>This page tests the connection to the UMBC Dashboard backend API.</p>
+        
+        <div class="test-section">
+            <h3>1. Health Check</h3>
+            <button class="test-button" onclick="testHealth()">Test Health Endpoint</button>
+            <div id="healthResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Available Students</h3>
+            <button class="test-button" onclick="testStudents()">Get Student List</button>
+            <div id="studentsResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Available Courses</h3>
+            <button class="test-button" onclick="testCourses()">Get Course List</button>
+            <div id="coursesResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Test Student Data</h3>
+            <input type="text" id="testStudentId" placeholder="Enter Student ID (e.g., ZO28124)" style="padding: 8px; margin-right: 10px; width: 200px;">
+            <button class="test-button" onclick="testStudentData()">Get Student Data</button>
+            <div id="studentDataResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. Test Course Recommendations</h3>
+            <input type="text" id="testStudentId2" placeholder="Enter Student ID" style="padding: 8px; margin-right: 10px; width: 200px;">
+            <input type="text" id="testTermId" placeholder="Enter Term ID (e.g., F2024)" style="padding: 8px; margin-right: 10px; width: 200px;">
+            <button class="test-button" onclick="testCourseRecommendations()">Get Course Recommendations</button>
+            <div id="courseRecResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>6. Test Chatbot</h3>
+            <input type="text" id="testStudentId3" placeholder="Enter Student ID" style="padding: 8px; margin-right: 10px; width: 200px;">
+            <input type="text" id="testQuestion" placeholder="Enter question" style="padding: 8px; margin-right: 10px; width: 300px;">
+            <button class="test-button" onclick="testChatbot()">Ask Chatbot</button>
+            <div id="chatbotResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>7. Run All Tests</h3>
+            <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+            <div id="allTestsResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.textContent = 'Testing health endpoint...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Health Check Passed\n\nStatus: ${data.status}\nModel Loaded: ${data.model_loaded}\nNeo4j Connected: ${data.neo4j_connected}\nFeatures Count: ${data.features_count}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Health Check Failed\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testStudents() {
+            const resultDiv = document.getElementById('studentsResult');
+            resultDiv.textContent = 'Fetching students...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/students`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Students Retrieved\n\nFound ${data.students.length} students:\n${data.students.slice(0, 10).join(', ')}${data.students.length > 10 ? '\n...' : ''}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Failed to get students\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testCourses() {
+            const resultDiv = document.getElementById('coursesResult');
+            resultDiv.textContent = 'Fetching courses...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Courses Retrieved\n\nFound ${data.courses.length} courses:\n${data.courses.slice(0, 10).join(', ')}${data.courses.length > 10 ? '\n...' : ''}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Failed to get courses\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testStudentData() {
+            const studentId = document.getElementById('testStudentId').value.trim();
+            const resultDiv = document.getElementById('studentDataResult');
+            
+            if (!studentId) {
+                resultDiv.textContent = '❌ Please enter a Student ID';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            resultDiv.textContent = `Fetching data for student ${studentId}...`;
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/student/${studentId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Student Data Retrieved\n\nStudent ID: ${data.id}\nName: ${data.name}\nMajor: ${data.major}\nGPA: ${data.gpa}\nRisk Level: ${data.risk}\nCredits Completed: ${data.creditsCompleted}\nEmail: ${data.email}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Failed to get student data\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testCourseRecommendations() {
+            const studentId = document.getElementById('testStudentId2').value.trim();
+            const termId = document.getElementById('testTermId').value.trim();
+            const resultDiv = document.getElementById('courseRecResult');
+            
+            if (!studentId || !termId) {
+                resultDiv.textContent = '❌ Please enter both Student ID and Term ID';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            resultDiv.textContent = `Fetching course recommendations for ${studentId} in ${termId}...`;
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/course-recommendations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        term_id: termId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Course Recommendations Retrieved\n\nFound ${data.length} recommendations:\n\n${data.slice(0, 3).map(course => 
+                        `${course.course_id} - ${course.course_name}\n  Credits: ${course.credits}\n  Difficulty: ${course.difficulty}\n  Available: ${course.is_available}\n  Reason: ${course.recommendation_reason}\n`
+                    ).join('\n')}${data.length > 3 ? '\n...' : ''}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Failed to get course recommendations\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testChatbot() {
+            const studentId = document.getElementById('testStudentId3').value.trim();
+            const question = document.getElementById('testQuestion').value.trim();
+            const resultDiv = document.getElementById('chatbotResult');
+            
+            if (!studentId || !question) {
+                resultDiv.textContent = '❌ Please enter both Student ID and Question';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            resultDiv.textContent = `Asking chatbot: "${question}"...`;
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chatbot/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        question: question
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Chatbot Response\n\nQuestion: ${data.question}\nAnswer: ${data.answer}\nConfidence: ${data.confidence}\nRecommendations: ${data.recommendations.length}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Failed to get chatbot response\nStatus: ${response.status}\nError: ${data.detail || 'Unknown error'}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection Error\n${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function runAllTests() {
+            const resultDiv = document.getElementById('allTestsResult');
+            resultDiv.textContent = 'Running all tests...';
+            resultDiv.className = 'result info';
+            
+            let results = [];
+            
+            // Test 1: Health
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                results.push(`Health: ${response.ok ? '✅' : '❌'} - ${data.status}`);
+            } catch (error) {
+                results.push(`Health: ❌ - ${error.message}`);
+            }
+            
+            // Test 2: Students
+            try {
+                const response = await fetch(`${API_BASE}/students`);
+                const data = await response.json();
+                results.push(`Students: ${response.ok ? '✅' : '❌'} - ${data.students ? data.students.length : 0} found`);
+            } catch (error) {
+                results.push(`Students: ❌ - ${error.message}`);
+            }
+            
+            // Test 3: Courses
+            try {
+                const response = await fetch(`${API_BASE}/courses`);
+                const data = await response.json();
+                results.push(`Courses: ${response.ok ? '✅' : '❌'} - ${data.courses ? data.courses.length : 0} found`);
+            } catch (error) {
+                results.push(`Courses: ❌ - ${error.message}`);
+            }
+            
+            resultDiv.textContent = `All Tests Complete:\n\n${results.join('\n')}`;
+            resultDiv.className = 'result info';
+        }
+        
+        // Auto-fill some test data
+        document.getElementById('testStudentId').value = 'ZO28124';
+        document.getElementById('testStudentId2').value = 'ZO28124';
+        document.getElementById('testStudentId3').value = 'ZO28124';
+        document.getElementById('testTermId').value = 'F2024';
+        document.getElementById('testQuestion').value = 'What courses should I take next semester?';
+    </script>
+</body>
+</html>
