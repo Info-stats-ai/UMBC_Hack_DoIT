@@ -5,18 +5,27 @@
     box-sizing: border-box;
 }
 
+:root {
+    --primary-color: #283593;
+    --linear-gradient: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
+}
+
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
+    background-attachment: fixed;
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px;  
 }
 
 /* Header */
@@ -187,7 +196,7 @@ main {
 }
 
 button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-color);
     color: white;
     padding: 15px 30px;
     border: none;
@@ -412,13 +421,12 @@ footer {
 }
 
 .option-card {
-    background: white;
     border-radius: 15px;
     padding: 30px;
     text-align: center;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 2px solid transparent;
+    border: 2px solid var(--primary-color);
 }
 
 .option-card:hover {
@@ -445,7 +453,7 @@ footer {
 }
 
 .option-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-color);
     color: white;
     padding: 12px 25px;
     border: none;
@@ -612,7 +620,7 @@ footer {
 
 /* AI Academic Advisor Section */
 .academic-advisor-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     border-radius: 25px;
     padding: 0;
     box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
@@ -628,7 +636,7 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    background: #283593;
     pointer-events: none;
 }
 
@@ -647,7 +655,7 @@ footer {
 
 /* Chat Header */
 .chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #283593;
     color: white;
     padding: 25px 30px;
     display: flex;
@@ -762,13 +770,13 @@ footer {
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: #283593;
     border-radius: 10px;
     border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #5a6fd8, #6b46a3);
+    background: #283593;
 }
 
 .message {
@@ -808,7 +816,7 @@ footer {
 }
 
 .bot-message .message-avatar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #283593;
     color: white;
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
@@ -820,7 +828,7 @@ footer {
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: #283593;
     border-radius: 50%;
     z-index: -1;
     animation: rotate 3s linear infinite;
@@ -875,7 +883,7 @@ footer {
 }
 
 .user-message .message-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #283593;
     color: white;
     margin-left: auto;
     max-width: 85%;
@@ -923,7 +931,7 @@ footer {
 
 /* Special styling for course recommendations */
 .message-text h3 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     color: white;
     padding: 12px 20px;
     border-radius: 20px;
@@ -1207,7 +1215,7 @@ footer {
 }
 
 .send-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     border: none;
     color: white;
     width: 50px;
@@ -1230,7 +1238,7 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #5a6fd8, #6b46a3);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.3s ease;
