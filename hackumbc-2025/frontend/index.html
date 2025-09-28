@@ -9,72 +9,26 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎓 UMBC Academic Risk Predictor</h1>
-            <p>Predict student success in specific courses using AI and graph analytics</p>
+            <h1>🎓 UMBC Academic Portal</h1>
+            <p>Your gateway to personalized academic tools and AI-powered insights</p>
         </header>
 
         <main>
-            <div class="dashboard-link">
-                <a href="/dashboard" class="dashboard-btn">🎓 Open Advisor Dashboard</a>
-            </div>
-            
-            <div class="prediction-form">
-                <h2>Student Course Risk Assessment</h2>
-                <form id="predictionForm">
-                    <div class="form-group">
-                        <label for="studentId">Student ID:</label>
-                        <input type="text" id="studentId" name="studentId" placeholder="e.g., ZO28124" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="courseId">Course ID:</label>
-                        <input type="text" id="courseId" name="courseId" placeholder="e.g., CSEE 200" required>
-                    </div>
-                    
-                    <button type="submit" id="predictBtn">🔮 Predict Risk</button>
-                </form>
-            </div>
-
-            <div id="loading" class="loading hidden">
-                <div class="spinner"></div>
-                <p>Analyzing student data and course patterns...</p>
-            </div>
-
-            <div id="results" class="results hidden">
-                <h3>Prediction Results</h3>
-                <div class="result-card">
-                    <div class="risk-level" id="riskLevel"></div>
-                    <div class="confidence-score">
-                        <span class="label">Confidence:</span>
-                        <span class="score" id="confidenceScore"></span>
-                    </div>
-                    <div class="recommendations" id="recommendations"></div>
+            <div class="welcome-section">
+                <div class="welcome-form">
+                    <h2>Welcome to UMBC Academic Portal</h2>
+                    <p>Enter your Student ID to access your personalized academic tools</p>
+                    <form id="studentLoginForm">
+                        <div class="form-group">
+                            <label for="studentId">Student ID:</label>
+                            <input type="text" id="studentId" name="studentId" placeholder="e.g., ZO28124" required>
+                        </div>
+                        <button type="submit" id="continueBtn">Continue</button>
+                    </form>
                 </div>
-            </div>
-
-            <div id="error" class="error hidden">
-                <h3>❌ Error</h3>
-                <p id="errorMessage"></p>
             </div>
         </main>
 
-        <section class="info-section">
-            <h3>How It Works</h3>
-            <div class="info-grid">
-                <div class="info-card">
-                    <h4>📊 Graph Analytics</h4>
-                    <p>Uses Neo4j graph database to analyze student-course relationships and academic pathways</p>
-                </div>
-                <div class="info-card">
-                    <h4>🤖 AI Prediction</h4>
-                    <p>LightGBM model trained on FastRP embeddings and community detection features</p>
-                </div>
-                <div class="info-card">
-                    <h4>🎯 Early Intervention</h4>
-                    <p>Identifies at-risk students before they struggle, enabling proactive support</p>
-                </div>
-            </div>
-        </section>
 
         <footer>
             <p>&copy; 2025 UMBC Academic Analytics Team</p>

@@ -298,6 +298,235 @@ footer {
     margin-top: 20px;
 }
 
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.welcome-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.welcome-form h2 {
+    color: #4a5568;
+    margin-bottom: 15px;
+    font-size: 2rem;
+}
+
+.welcome-form p {
+    color: #718096;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+/* Student Options Page Styles */
+.options-section {
+    padding: 20px 0;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.option-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-color: #667eea;
+}
+
+.option-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.option-card h3 {
+    color: #2d3748;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+.option-card p {
+    color: #718096;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.option-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: auto;
+    min-width: 150px;
+}
+
+.option-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.option-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Risk Prediction Section */
+.risk-prediction-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-top: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.section-header h2 {
+    color: #4a5568;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.back-btn {
+    background: #e2e8f0;
+    color: #4a5568;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: auto;
+}
+
+.back-btn:hover {
+    background: #cbd5e0;
+}
+
+/* Enhanced Results Display */
+.risk-level {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.risk-level.low-risk {
+    background: #c6f6d5;
+    color: #22543d;
+    border: 2px solid #68d391;
+}
+
+.risk-level.high-risk {
+    background: #fed7d7;
+    color: #742a2a;
+    border: 2px solid #fc8181;
+}
+
+.risk-icon {
+    font-size: 2rem;
+}
+
+.risk-text h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.4rem;
+}
+
+.risk-text p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* Probability Bars */
+.probability-info {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.probability-info h5 {
+    margin: 0 0 15px 0;
+    color: #2d3748;
+}
+
+.probability-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prob-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prob-label {
+    min-width: 80px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.prob-bar-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prob-bar-fill {
+    height: 20px;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.prob-bar-fill.high-risk {
+    background: linear-gradient(90deg, #fc8181, #f56565);
+}
+
+.prob-bar-fill.low-risk {
+    background: linear-gradient(90deg, #68d391, #48bb78);
+}
+
+.prob-percentage {
+    font-weight: 600;
+    color: #2d3748;
+    min-width: 45px;
+}
+
 /* Utility classes */
 .hidden {
     display: none;

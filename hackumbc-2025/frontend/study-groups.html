@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Groups - UMBC Academic Success Platform</title>
+    <link rel="stylesheet" href="study-groups.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>UMBC Academic Success</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/student-options" class="nav-link">Student Portal</a>
+                <a href="/study-groups" class="nav-link active">Study Groups</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="container">
+                <h1 class="page-title">
+                    <i class="fas fa-users"></i>
+                    Study Groups & Partner Matching
+                </h1>
+                <p class="page-subtitle">
+                    Find compatible study partners and join study groups based on learning style, performance, and schedule compatibility
+                </p>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="container">
+                <div class="search-cards">
+                    <!-- Find Study Partners Card -->
+                    <div class="search-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-search"></i> Find Study Partners</h3>
+                            <p>Find compatible study partners for a specific course</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="partner-student-id">Your Student ID</label>
+                                <input type="text" id="partner-student-id" placeholder="Enter your student ID">
+                            </div>
+                            <div class="form-group">
+                                <label for="partner-course-id">Course</label>
+                                <select id="partner-course-id">
+                                    <option value="">Select a course</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="max-partners">Maximum Partners</label>
+                                <input type="number" id="max-partners" value="10" min="1" max="20">
+                            </div>
+                            <button class="btn-primary" onclick="findStudyPartners()">
+                                <i class="fas fa-search"></i> Find Partners
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Create Study Groups Card -->
+                    <div class="search-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-plus-circle"></i> Create Study Groups</h3>
+                            <p>Automatically form optimal study groups for a course</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="groups-course-id">Course</label>
+                                <select id="groups-course-id">
+                                    <option value="">Select a course</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="min-group-size">Minimum Group Size</label>
+                                <input type="number" id="min-group-size" value="3" min="2" max="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="max-group-size">Maximum Group Size</label>
+                                <input type="number" id="max-group-size" value="5" min="3" max="15">
+                            </div>
+                            <button class="btn-primary" onclick="createStudyGroups()">
+                                <i class="fas fa-plus-circle"></i> Create Groups
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section">
+            <div class="container">
+                <!-- Loading Indicator -->
+                <div id="loading" class="loading-container" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing compatibility and forming recommendations...</p>
+                </div>
+
+                <!-- Study Partners Results -->
+                <div id="partners-results" class="results-container" style="display: none;">
+                    <div class="results-header">
+                        <h2><i class="fas fa-user-friends"></i> Compatible Study Partners</h2>
+                        <div class="results-count">
+                            <span id="partners-count">0</span> partners found
+                        </div>
+                    </div>
+                    <div id="partners-list" class="partners-grid">
+                        <!-- Partners will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Study Groups Results -->
+                <div id="groups-results" class="results-container" style="display: none;">
+                    <div class="results-header">
+                        <h2><i class="fas fa-users"></i> Recommended Study Groups</h2>
+                        <div class="results-count">
+                            <span id="groups-count">0</span> groups formed
+                        </div>
+                    </div>
+                    <div id="groups-list" class="groups-grid">
+                        <!-- Groups will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="error-message" class="error-container" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error</h3>
+                    <p id="error-text"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="container">
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h4>Smart Matching</h4>
+                        <p>Our algorithm considers learning styles, performance similarity, schedule compatibility, and course history to find the best study partners.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4>Performance Balance</h4>
+                        <p>Groups are formed to include students with complementary strengths, creating an environment for mutual learning and growth.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4>Schedule Optimization</h4>
+                        <p>Meeting times are suggested based on members' work schedules and availability patterns for maximum convenience.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                        <h4>Learning Diversity</h4>
+                        <p>Groups include students with different learning styles (Visual, Auditory, Kinesthetic, Reading) for comprehensive understanding.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>UMBC Academic Success Platform</h4>
+                    <p>Empowering students through data-driven insights and collaborative learning opportunities.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li><a href="/dashboard">Academic Risk Prediction</a></li>
+                        <li><a href="/dashboard">Course Path Optimization</a></li>
+                        <li><a href="/study-groups">Study Group Matching</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">User Guide</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 UMBC Academic Success Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Partner Details Modal -->
+    <div id="partner-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Study Partner Details</h3>
+                <span class="close" onclick="closePartnerModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="partner-details">
+                    <!-- Partner details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Details Modal -->
+    <div id="group-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Study Group Details</h3>
+                <span class="close" onclick="closeGroupModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="group-details">
+                    <!-- Group details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="study-groups.js"></script>
+</body>
+</html>
