@@ -38,13 +38,22 @@ function openRiskPrediction() {
 function closeRiskPrediction() {
     const optionsSection = document.querySelector('.options-section');
     const riskSection = document.getElementById('riskPredictionSection');
-    
+
     if (optionsSection && riskSection) {
         optionsSection.classList.remove('hidden');
         riskSection.classList.add('hidden');
-        
+
         // Clear any previous results
         clearResults();
+    }
+}
+
+function openCoursePlanning() {
+    // Navigate to course planning page with student ID
+    if (currentStudentId) {
+        window.location.href = `/course-planning?studentId=${encodeURIComponent(currentStudentId)}`;
+    } else {
+        alert('Student ID not found. Please return to the home page.');
     }
 }
 
