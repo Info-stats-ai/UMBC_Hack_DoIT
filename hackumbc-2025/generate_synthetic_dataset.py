@@ -31,12 +31,12 @@ fake = Faker(['en_US'])
 OUTPUT_DIR = "umbc_data"
 
 # Data Size Configuration (minimal for fast prototyping)
-NUM_STUDENTS = 10
-NUM_COURSES = 5
-NUM_FACULTY = 2
-NUM_DEGREES = 2
-TERMS_TO_GENERATE = 2
-HISTORY_YEARS = 1
+NUM_STUDENTS = 500        # Reduced number of students for more focused data
+NUM_COURSES = 100         # Reduced number of courses for two departments
+NUM_FACULTY = 30          # Reduced number of faculty for two departments
+NUM_DEGREES = 4           # Two degrees per department (BS and BA)
+TERMS_TO_GENERATE = 12    # Number of academic terms to generate
+HISTORY_YEARS = 4         # Years of historical data
 
 # System Complexity (minimal)
 AVG_COURSES_PER_STUDENT = 3
