@@ -32,6 +32,15 @@ function openCoursePlanning() {
     }
 }
 
+function openProgressTracking() {
+    // Navigate to progress tracking page with student ID
+    if (currentStudentId) {
+        window.location.href = `/progress-tracking?studentId=${encodeURIComponent(currentStudentId)}`;
+    } else {
+        alert('Student ID not found. Please return to the home page.');
+    }
+}
+
 function openAcademicAdvisor() {
     console.log('openAcademicAdvisor called');
     

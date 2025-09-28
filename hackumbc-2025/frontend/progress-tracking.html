@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Tracking - UMBC Student Portal</title>
+    <link rel="stylesheet" href="progress-tracking.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="progress-container">
+        <!-- Header -->
+        <header class="progress-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>Progress Tracking</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="student-info">
+                        <span id="studentIdDisplay">Student ID: --</span>
+                    </div>
+                    <div class="refresh-btn" id="refreshProgress">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </div>
+                    <div class="back-btn" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="progress-main">
+            <!-- Overview Cards -->
+            <section class="overview-section">
+                <div class="overview-cards">
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Overall GPA</h3>
+                            <div class="metric-value" id="overallGPA">--</div>
+                            <div class="metric-change" id="gpaChange">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Credits Completed</h3>
+                            <div class="metric-value" id="creditsCompleted">--</div>
+                            <div class="metric-change" id="creditsChange">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Courses Passed</h3>
+                            <div class="metric-value" id="coursesPassed">--</div>
+                            <div class="metric-change" id="coursesChange">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Semester Progress</h3>
+                            <div class="metric-value" id="semesterProgress">--%</div>
+                            <div class="metric-change" id="semesterChange">--</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="charts-grid">
+                    <!-- GPA Trend Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>GPA Trend Over Time</h3>
+                            <div class="chart-controls">
+                                <select id="gpaTimeFilter">
+                                    <option value="semester">By Semester</option>
+                                    <option value="year">By Year</option>
+                                    <option value="course">By Course</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="gpaTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Course Performance -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Course Performance</h3>
+                            <div class="chart-controls">
+                                <select id="coursePerformanceFilter">
+                                    <option value="current">Current Semester</option>
+                                    <option value="all">All Time</option>
+                                    <option value="major">Major Courses</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="coursePerformanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Credit Progress -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Credit Progress</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="creditProgressChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Grade Distribution -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Grade Distribution</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="gradeDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Courses Section -->
+            <section class="recent-courses-section">
+                <div class="card recent-courses-card">
+                    <div class="card-header">
+                        <h3>Recent Course Performance</h3>
+                        <div class="course-controls">
+                            <select id="courseTimeFilter">
+                                <option value="current">Current Semester</option>
+                                <option value="last">Last Semester</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="courses-list" id="coursesList">
+                            <div class="no-courses">
+                                <i class="fas fa-book-open"></i>
+                                <p>Loading course data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Achievements Section -->
+            <section class="achievements-section">
+                <div class="card achievements-card">
+                    <div class="card-header">
+                        <h3>Achievements & Milestones</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="achievements-grid" id="achievementsGrid">
+                            <div class="achievement-item">
+                                <i class="fas fa-medal"></i>
+                                <h4>Dean's List</h4>
+                                <p>Achieved GPA of 3.5 or higher</p>
+                                <div class="achievement-status earned">Earned</div>
+                            </div>
+                            <div class="achievement-item">
+                                <i class="fas fa-star"></i>
+                                <h4>Perfect Semester</h4>
+                                <p>All A's in a semester</p>
+                                <div class="achievement-status pending">Pending</div>
+                            </div>
+                            <div class="achievement-item">
+                                <i class="fas fa-fire"></i>
+                                <h4>Streak Master</h4>
+                                <p>3 consecutive semesters above 3.0</p>
+                                <div class="achievement-status earned">Earned</div>
+                            </div>
+                            <div class="achievement-item">
+                                <i class="fas fa-rocket"></i>
+                                <h4>Early Graduate</h4>
+                                <p>Complete degree ahead of schedule</p>
+                                <div class="achievement-status pending">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Goals Section -->
+            <section class="goals-section">
+                <div class="card goals-card">
+                    <div class="card-header">
+                        <h3>Academic Goals</h3>
+                        <button class="add-goal-btn" id="addGoalBtn">
+                            <i class="fas fa-plus"></i>
+                            Add Goal
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <div class="goals-list" id="goalsList">
+                            <div class="goal-item">
+                                <div class="goal-content">
+                                    <h4>Maintain 3.5+ GPA</h4>
+                                    <p>Target: 3.5 GPA | Current: 3.4</p>
+                                    <div class="goal-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 97%"></div>
+                                        </div>
+                                        <span class="progress-text">97%</span>
+                                    </div>
+                                </div>
+                                <div class="goal-actions">
+                                    <button class="edit-goal-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="delete-goal-btn"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-content">
+                                    <h4>Complete 15 Credits</h4>
+                                    <p>Target: 15 credits | Current: 12</p>
+                                    <div class="goal-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 80%"></div>
+                                        </div>
+                                        <span class="progress-text">80%</span>
+                                    </div>
+                                </div>
+                                <div class="goal-actions">
+                                    <button class="edit-goal-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="delete-goal-btn"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading progress data...</p>
+            </div>
+        </div>
+
+        <!-- Add Goal Modal -->
+        <div class="modal" id="addGoalModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add New Goal</h3>
+                    <button class="close-modal" id="closeGoalModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addGoalForm">
+                        <div class="form-group">
+                            <label for="goalTitle">Goal Title:</label>
+                            <input type="text" id="goalTitle" name="goalTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="goalDescription">Description:</label>
+                            <textarea id="goalDescription" name="goalDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="goalTarget">Target Value:</label>
+                            <input type="number" id="goalTarget" name="goalTarget" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="goalType">Goal Type:</label>
+                            <select id="goalType" name="goalType" required>
+                                <option value="gpa">GPA</option>
+                                <option value="credits">Credits</option>
+                                <option value="courses">Courses</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="cancel-btn" id="cancelGoalBtn">Cancel</button>
+                            <button type="submit" class="save-btn">Save Goal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="progress-tracking.js"></script>
+</body>
+</html>

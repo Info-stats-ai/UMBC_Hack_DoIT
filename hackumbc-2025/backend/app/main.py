@@ -10,7 +10,7 @@ from neo4j import GraphDatabase
 import os
 from typing import Dict, Any, List
 import logging
-from .study_groups_service import StudyGroupsService
+from study_groups_service import StudyGroupsService
 import google.generativeai as genai
 import json
 import random
@@ -36,17 +36,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check endpoint - must be first to avoid catch-all route
-@app.get("/health", response_model=HealthResponse)
-async def health_check():
-    """Health check endpoint"""
-    return HealthResponse(
-        status="healthy" if model and driver else "degraded",
-        model_loaded=model is not None,
-        neo4j_connected=driver is not None,
-        features_count=len(feature_names) if feature_names else 0
-    )
-
 # Mount static files (frontend)
 frontend_path = os.path.join("..", "frontend")
 if os.path.exists(frontend_path):
@@ -64,6 +53,493 @@ if os.path.exists(frontend_path):
     @app.get("/dashboard.js")
     async def get_dashboard_script():
         return FileResponse(os.path.join(frontend_path, "dashboard.js"))
+    
+    @app.get("/student-options")
+    async def serve_student_options():
+        """Serve the student options page"""
+        options_file = os.path.join("..", "frontend", "student-options.html")
+        if os.path.exists(options_file):
+            return FileResponse(options_file)
+        return {"message": "Student options page not found"}
+
+    @app.get("/student-options.html")
+    async def serve_student_options_html():
+        """Serve the student options page with .html extension"""
+        options_file = os.path.join("..", "frontend", "student-options.html")
+        if os.path.exists(options_file):
+            return FileResponse(options_file)
+        return {"message": "Student options page not found"}
+
+    @app.get("/student-options.js")
+    async def get_student_options_script():
+        return FileResponse(os.path.join("..", "frontend", "student-options.js"))
+
+    @app.get("/study-groups")
+    async def serve_study_groups():
+        """Serve the study groups page"""
+        study_groups_file = os.path.join("..", "frontend", "study-groups.html")
+        if os.path.exists(study_groups_file):
+            return FileResponse(study_groups_file)
+        return {"message": "Study groups page not found"}
+
+    @app.get("/study-groups.html")
+    async def serve_study_groups_html():
+        """Serve the study groups page with .html extension"""
+        study_groups_file = os.path.join("..", "frontend", "study-groups.html")
+        if os.path.exists(study_groups_file):
+            return FileResponse(study_groups_file)
+        return {"message": "Study groups page not found"}
+
+    @app.get("/study-groups.css")
+    async def get_study_groups_css():
+        return FileResponse(os.path.join("..", "frontend", "study-groups.css"))
+
+    @app.get("/study-groups.js")
+    async def get_study_groups_script():
+        return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
+    
+    @app.get("/students")
+    async def get_available_students():
+        """Get list of available students"""
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+        
+        query = "MATCH (s:Student) RETURN s.id as student_id ORDER BY s.id LIMIT 20"
+        
+        with driver.session(database=NEO4J_DB) as session:
+            result = session.run(query)
+            students = [record["student_id"] for record in result]
+        
+        return {"students": students}
+
+    @app.get("/courses")
+    async def get_available_courses():
+        """Get list of available courses"""
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+        
+        query = "MATCH (c:Course) RETURN c.id as course_id, c.name as course_name ORDER BY c.id LIMIT 50"
+        
+        with driver.session(database=NEO4J_DB) as session:
+            result = session.run(query)
+            courses = [{"id": record["course_id"], "name": record["course_name"]} for record in result]
+        
+        return {"courses": courses}
+
+    @app.get("/course-planning")
+    async def serve_course_planning():
+        """Serve the course planning page"""
+        planning_file = os.path.join("..", "frontend", "course-planning.html")
+        if os.path.exists(planning_file):
+            return FileResponse(planning_file)
+        return {"message": "Course planning page not found"}
+
+    @app.get("/course-planning.html")
+    async def serve_course_planning_html():
+        """Serve the course planning page with .html extension"""
+        planning_file = os.path.join("..", "frontend", "course-planning.html")
+        if os.path.exists(planning_file):
+            return FileResponse(planning_file)
+        return {"message": "Course planning page not found"}
+
+    @app.get("/course-planning.js")
+    async def get_course_planning_script():
+        return FileResponse(os.path.join("..", "frontend", "course-planning.js"))
+
+    @app.get("/course-planning.css")
+    async def get_course_planning_css():
+        return FileResponse(os.path.join("..", "frontend", "course-planning.css"))
+
+    @app.get("/risk-assessment")
+    async def serve_risk_assessment():
+        """Serve the risk assessment page"""
+        risk_file = os.path.join("..", "frontend", "risk-assessment.html")
+        if os.path.exists(risk_file):
+            return FileResponse(risk_file)
+        return {"message": "Risk assessment page not found"}
+
+    @app.get("/risk-assessment.html")
+    async def serve_risk_assessment_html():
+        """Serve the risk assessment page with .html extension"""
+        risk_file = os.path.join("..", "frontend", "risk-assessment.html")
+        if os.path.exists(risk_file):
+            return FileResponse(risk_file)
+        return {"message": "Risk assessment page not found"}
+    
+    # Progress Tracking API endpoints
+    @app.get("/progress-tracking")
+    async def serve_progress_tracking():
+        """Serve the progress tracking page"""
+        progress_file = os.path.join("..", "frontend", "progress-tracking.html")
+        if os.path.exists(progress_file):
+            return FileResponse(progress_file)
+        raise HTTPException(status_code=404, detail="Progress tracking page not found")
+
+    @app.get("/progress-tracking.css")
+    async def get_progress_tracking_styles():
+        """Serve the progress tracking CSS"""
+        return FileResponse(os.path.join("..", "frontend", "progress-tracking.css"))
+
+    @app.get("/progress-tracking.js")
+    async def get_progress_tracking_script():
+        """Serve the progress tracking JavaScript"""
+        return FileResponse(os.path.join("..", "frontend", "progress-tracking.js"))
+
+    @app.get("/api/student/{student_id}/progress")
+    async def get_student_progress(student_id: str):
+        """Get student progress overview data"""
+        print(f"Getting student progress for student {student_id}")
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+        
+        try:
+            with driver.session(database=NEO4J_DB) as session:
+                # First check if student exists
+                student_check = session.run("""
+                    MATCH (s:Student {id: $student_id})
+                    RETURN s.id as student_id, s.name as name
+                """, student_id=student_id).single()
+                
+                if not student_check:
+                    raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+                
+                # Get basic student progress data with simpler queries
+                # Get GPA using relationship grade property
+                gpa_result = session.run("""
+                    MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                    WHERE tc.grade IS NOT NULL AND tc.grade <> ''
+                    WITH collect(tc.grade) as grades
+                    WITH [g in grades WHERE g IN ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F']] as valid_grades
+                    WITH reduce(total = 0.0, grade in valid_grades | 
+                        total + CASE grade
+                            WHEN 'A' THEN 4.0
+                            WHEN 'A-' THEN 3.7
+                            WHEN 'B+' THEN 3.3
+                            WHEN 'B' THEN 3.0
+                            WHEN 'B-' THEN 2.7
+                            WHEN 'C+' THEN 2.3
+                            WHEN 'C' THEN 2.0
+                            WHEN 'C-' THEN 1.7
+                            WHEN 'D+' THEN 1.3
+                            WHEN 'D' THEN 1.0
+                            WHEN 'F' THEN 0.0
+                            ELSE 0.0
+                        END
+                    ) as total_points, size(valid_grades) as count
+                    RETURN CASE WHEN count > 0 THEN total_points / count ELSE 0.0 END as gpa
+                """, student_id=student_id).single()
+                
+                gpa = gpa_result["gpa"] if gpa_result else 0.0
+                
+                # Get credits completed
+                credits_result = session.run("""
+                    MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course)
+                    RETURN sum(c.credits) as credits_completed
+                """, student_id=student_id).single()
+                
+                credits_completed = credits_result["credits_completed"] if credits_result and credits_result["credits_completed"] else 0
+                
+                # Get courses passed using relationship grade property
+                courses_passed_result = session.run("""
+                    MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                    WHERE tc.grade IN ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C']
+                    RETURN count(c) as courses_passed
+                """, student_id=student_id).single()
+                
+                courses_passed = courses_passed_result["courses_passed"] if courses_passed_result else 0
+                
+                # Get total courses
+                total_courses_result = session.run("""
+                    MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course)
+                    RETURN count(c) as total_courses
+                """, student_id=student_id).single()
+                
+                total_courses = total_courses_result["total_courses"] if total_courses_result else 0
+                
+                # Just show credits completed without assuming total needed
+                semester_progress = 0  # Remove assumption-based calculation
+                
+                # For now, set change values to 0 (can be enhanced later)
+                gpa_change = 0.0
+                credits_change = 0.0
+                courses_change = 0.0
+                
+                return {
+                    "gpa": round(gpa, 2),
+                    "creditsCompleted": credits_completed,
+                    "coursesPassed": courses_passed,
+                    "totalCourses": total_courses,
+                    "semesterProgress": round(semester_progress),
+                    "gpaChange": gpa_change,
+                    "creditsChange": credits_change,
+                    "coursesChange": courses_change,
+                    "semesterChange": 0.0,
+                    "studentName": student_check["name"] or "Unknown"
+                }
+                
+        except HTTPException:
+            # Re-raise HTTP exceptions (like 404)
+            raise
+        except Exception as e:
+            logger.error(f"Error getting student progress: {e}")
+            # Don't return fake data, let the error propagate
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    @app.get("/api/student/{student_id}/courses")
+    async def get_student_courses(student_id: str, filter: str = "current"):
+        """Get student courses based on filter"""
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+        
+        try:
+            with driver.session(database=NEO4J_DB) as session:
+                # First check if student exists
+                student_check = session.run("""
+                    MATCH (s:Student {id: $student_id})
+                    RETURN s.id as student_id
+                """, student_id=student_id).single()
+                
+                if not student_check:
+                    raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+                
+                # Build query based on filter
+                if filter == "current":
+                    query = """
+                        MATCH (s:Student {id: $student_id})-[:ENROLLED]->(c:Course)
+                        RETURN c.name as name, c.course_id as code, c.credits as credits, 
+                               c.semester as semester, c.grade as grade, c.department as department
+                        ORDER BY c.semester DESC, c.name ASC
+                        LIMIT 15
+                    """
+                elif filter == "last":
+                    query = """
+                        MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                        WHERE c.semester CONTAINS '2024' OR c.semester CONTAINS '2023'
+                        RETURN c.name as name, c.course_id as code, c.credits as credits, 
+                               c.semester as semester, tc.grade as grade, c.department as department
+                        ORDER BY c.semester DESC, c.name ASC
+                        LIMIT 15
+                    """
+                else:  # all or year
+                    query = """
+                        MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                        RETURN c.name as name, c.course_id as code, c.credits as credits, 
+                               c.semester as semester, tc.grade as grade, c.department as department
+                        ORDER BY c.semester DESC, c.name ASC
+                        LIMIT 25
+                    """
+                
+                result = session.run(query, student_id=student_id)
+                courses = []
+                
+                for record in result:
+                    course_data = {
+                        "name": record["name"] or "Unknown Course",
+                        "code": record["code"] or "UNKNOWN",
+                        "credits": record["credits"] or 3,
+                        "semester": record["semester"] or "Unknown",
+                        "grade": record["grade"] or "N/A",
+                        "department": record["department"] or "Unknown"
+                    }
+                    
+                    # Add grade color class for frontend
+                    grade = course_data["grade"]
+                    if grade in ['A', 'A-']:
+                        course_data["gradeClass"] = "A"
+                    elif grade in ['B+', 'B', 'B-']:
+                        course_data["gradeClass"] = "B"
+                    elif grade in ['C+', 'C', 'C-']:
+                        course_data["gradeClass"] = "C"
+                    elif grade in ['D+', 'D']:
+                        course_data["gradeClass"] = "D"
+                    elif grade == 'F':
+                        course_data["gradeClass"] = "F"
+                    else:
+                        course_data["gradeClass"] = "N/A"
+                    
+                    courses.append(course_data)
+                
+                return courses
+                
+        except HTTPException:
+            # Re-raise HTTP exceptions (like 404)
+            raise
+        except Exception as e:
+            logger.error(f"Error getting student courses: {e}")
+            # Don't return fake data, let the error propagate
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    @app.get("/api/student/{student_id}/charts")
+    async def get_student_chart_data(student_id: str):
+        """Get chart data for student progress tracking"""
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+        try:
+            with driver.session(database=NEO4J_DB) as session:
+                # Check if student exists
+                student_check = session.run("""
+                    MATCH (s:Student {id: $student_id})
+                    RETURN s.id as student_id
+                """, student_id=student_id).single()
+
+                if not student_check:
+                    raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+
+                # Get grade distribution using relationship grade property
+                grade_distribution = session.run("""
+                    MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                    WHERE tc.grade IS NOT NULL AND tc.grade <> ''
+                    WITH tc.grade as grade
+                    RETURN grade, count(*) as count
+                    ORDER BY grade
+                """, student_id=student_id)
+
+                grades = {'A': 0, 'B': 0, 'C': 0, 'D/F': 0}
+                for record in grade_distribution:
+                    grade = record["grade"]
+                    count = record["count"]
+                    if grade in ['A', 'A-']:
+                        grades['A'] += count
+                    elif grade in ['B+', 'B', 'B-']:
+                        grades['B'] += count
+                    elif grade in ['C+', 'C', 'C-']:
+                        grades['C'] += count
+                    else:
+                        grades['D/F'] += count
+
+                # Get semester-wise GPA using relationship grade property
+                gpa_trend = session.run("""
+                    MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                    WHERE tc.grade IS NOT NULL AND tc.grade <> '' AND c.semester IS NOT NULL
+                    WITH c.semester as semester, collect(tc.grade) as semester_grades
+                    WITH semester, reduce(total = 0.0, grade in semester_grades |
+                        total + CASE grade
+                            WHEN 'A' THEN 4.0
+                            WHEN 'A-' THEN 3.7
+                            WHEN 'B+' THEN 3.3
+                            WHEN 'B' THEN 3.0
+                            WHEN 'B-' THEN 2.7
+                            WHEN 'C+' THEN 2.3
+                            WHEN 'C' THEN 2.0
+                            WHEN 'C-' THEN 1.7
+                            WHEN 'D+' THEN 1.3
+                            WHEN 'D' THEN 1.0
+                            WHEN 'F' THEN 0.0
+                            ELSE 0.0
+                        END
+                    ) as total_points, size(semester_grades) as count
+                    RETURN semester, CASE WHEN count > 0 THEN total_points / count ELSE 0.0 END as gpa
+                    ORDER BY semester
+                """, student_id=student_id)
+
+                semesters = []
+                gpas = []
+                for record in gpa_trend:
+                    semesters.append(record["semester"])
+                    gpas.append(round(record["gpa"], 2))
+
+                # Get total credits
+                total_credits = session.run("""
+                    MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course)
+                    RETURN sum(c.credits) as total_credits
+                """, student_id=student_id).single()
+
+                completed_credits = total_credits["total_credits"] if total_credits and total_credits["total_credits"] else 0
+
+                return {
+                    "gradeDistribution": {
+                        "labels": list(grades.keys()),
+                        "data": list(grades.values())
+                    },
+                    "gpaTrend": {
+                        "labels": semesters[-5:] if len(semesters) > 5 else semesters,  # Last 5 semesters
+                        "data": gpas[-5:] if len(gpas) > 5 else gpas
+                    },
+                    "creditProgress": {
+                        "completed": completed_credits,
+                        "remaining": 0  # Don't assume total credits needed
+                    }
+                }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting chart data: {e}")
+            # Don't return fake data, let the error propagate
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    @app.get("/api/student/{student_id}/debug")
+    async def debug_student_data(student_id: str):
+        """Debug endpoint to check student data"""
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j database not available")
+        
+        try:
+            with driver.session(database=NEO4J_DB) as session:
+                # Check if student exists
+                student_check = session.run("""
+                    MATCH (s:Student {id: $student_id})
+                    RETURN s.id as student_id, s.name as name
+                """, student_id=student_id).single()
+                
+                if not student_check:
+                    return {"error": f"Student {student_id} not found"}
+                
+                # Get basic course count
+                course_count = session.run("""
+                    MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course)
+                    RETURN count(c) as course_count
+                """, student_id=student_id).single()
+                
+                # Get sample courses using relationship grade property
+                sample_courses = session.run("""
+                    MATCH (s:Student {id: $student_id})-[tc:COMPLETED]->(c:Course)
+                    RETURN c.name as name, tc.grade as grade, c.credits as credits
+                    LIMIT 5
+                """, student_id=student_id)
+                
+                courses = [{"name": record["name"], "grade": record["grade"], "credits": record["credits"]} for record in sample_courses]
+                
+                return {
+                    "student_exists": True,
+                    "student_name": student_check["name"],
+                    "total_courses": course_count["course_count"] if course_count else 0,
+                    "sample_courses": courses
+                }
+                
+        except Exception as e:
+            logger.error(f"Debug error: {e}")
+            return {"error": str(e)}
+
+    @app.get("/api/student/{student_id}/goals")
+    async def get_student_goals(student_id: str):
+        """Get student academic goals"""
+        # For now, return mock data. In a real application, this would be stored in a database
+        return [
+        
+        ]
+
+    @app.post("/api/student/{student_id}/goals")
+    async def add_student_goal(student_id: str, goal_data: dict):
+        """Add a new goal for a student"""
+        # In a real application, this would save to a database
+        logger.info(f"Adding goal for student {student_id}: {goal_data}")
+        return {"message": "Goal added successfully", "goal_id": 123}
+
+    @app.put("/api/student/{student_id}/goals/{goal_id}")
+    async def update_student_goal(student_id: str, goal_id: int, goal_data: dict):
+        """Update a student's goal"""
+        # In a real application, this would update the database
+        logger.info(f"Updating goal {goal_id} for student {student_id}: {goal_data}")
+        return {"message": "Goal updated successfully"}
+
+    @app.delete("/api/student/{student_id}/goals/{goal_id}")
+    async def delete_student_goal(student_id: str, goal_id: int):
+        """Delete a student's goal"""
+        # In a real application, this would delete from the database
+        logger.info(f"Deleting goal {goal_id} for student {student_id}")
+        return {"message": "Goal deleted successfully"}
     
     # Serve HTML files directly (this should be last to avoid catching API routes)
     @app.get("/{filename}")
@@ -402,26 +878,6 @@ async def root():
         return FileResponse(frontend_file)
     return {"message": "UMBC Academic Risk Predictor API", "status": "running", "frontend": "not found"}
 
-@app.get("/student-options")
-async def serve_student_options():
-    """Serve the student options page"""
-    options_file = os.path.join("..", "frontend", "student-options.html")
-    if os.path.exists(options_file):
-        return FileResponse(options_file)
-    return {"message": "Student options page not found"}
-
-@app.get("/student-options.html")
-async def serve_student_options_html():
-    """Serve the student options page with .html extension"""
-    options_file = os.path.join("..", "frontend", "student-options.html")
-    if os.path.exists(options_file):
-        return FileResponse(options_file)
-    return {"message": "Student options page not found"}
-
-@app.get("/student-options.js")
-async def get_student_options_script():
-    return FileResponse(os.path.join("..", "frontend", "student-options.js"))
-
 @app.get("/study-groups")
 async def serve_study_groups():
     """Serve the study groups page"""
@@ -446,44 +902,15 @@ async def get_study_groups_styles():
 async def get_study_groups_script():
     return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return HealthResponse(
-        status="healthy" if model and driver else "degraded",
-        model_loaded=model is not None,
-        neo4j_connected=driver is not None,
-        features_count=len(feature_names) if feature_names else 0
-    )
-
-
-@app.get("/students")
-async def get_available_students():
-    """Get list of available students"""
-    if not driver:
-        raise HTTPException(status_code=503, detail="Neo4j database not available")
-    
-    query = "MATCH (s:Student) RETURN s.id as student_id ORDER BY s.id LIMIT 20"
-    
-    with driver.session(database=NEO4J_DB) as session:
-        result = session.run(query)
-        students = [record["student_id"] for record in result]
-    
-    return {"students": students}
-
-@app.get("/courses")
-async def get_available_courses():
-    """Get list of available courses"""
-    if not driver:
-        raise HTTPException(status_code=503, detail="Neo4j database not available")
-    
-    query = "MATCH (c:Course) RETURN c.id as course_id ORDER BY c.id LIMIT 20"
-    
-    with driver.session(database=NEO4J_DB) as session:
-        result = session.run(query)
-        courses = [record["course_id"] for record in result]
-    
-    return {"courses": courses}
+    return {
+        "status": "healthy" if model and driver else "degraded",
+        "model_loaded": model is not None,
+        "neo4j_connected": driver is not None,
+        "features_count": len(feature_names) if feature_names else 0
+    }
 
 # Study Groups API endpoints
 @app.post("/study-partners", response_model=List[StudyPartnerResponse])
@@ -807,54 +1234,6 @@ async def get_at_risk_students():
             "students": at_risk_students
         }
 
-@app.get("/dashboard/course-paths/{major}")
-async def get_course_paths(major: str):
-    """Get optimal course paths for a major"""
-    
-    # Sample course paths - in reality, this would use graph algorithms
-    paths = {
-        "computer-science": {
-            "total_credits": 120,
-            "estimated_duration": "4 years",
-            "success_probability": 87,
-            "path": [
-                {"semester": "Fall Year 1", "courses": ["CSEE 200", "MATH 151", "ENGL 100"]},
-                {"semester": "Spring Year 1", "courses": ["CSEE 201", "MATH 152", "PHYS 121"]},
-                {"semester": "Fall Year 2", "courses": ["CSEE 301", "MATH 251", "CSEE 300"]},
-                {"semester": "Spring Year 2", "courses": ["CSEE 302", "CSEE 400", "MATH 301"]}
-            ],
-            "alternatives": [
-                {
-                    "name": "Accelerated Path",
-                    "description": "Complete degree in 3 years with summer courses",
-                    "pros": ["Faster completion"],
-                    "cons": ["Higher workload"],
-                    "duration": "3 years"
-                },
-                {
-                    "name": "Research Focus",
-                    "description": "Include undergraduate research opportunities",
-                    "pros": ["Research experience", "Graduate school prep"],
-                    "cons": ["Longer timeline"],
-                    "duration": "4.5 years"
-                }
-            ]
-        },
-        "mathematics": {
-            "total_credits": 120,
-            "estimated_duration": "4 years",
-            "success_probability": 91,
-            "path": [
-                {"semester": "Fall Year 1", "courses": ["MATH 151", "PHYS 121", "ENGL 100"]},
-                {"semester": "Spring Year 1", "courses": ["MATH 152", "MATH 221", "CSEE 200"]},
-                {"semester": "Fall Year 2", "courses": ["MATH 251", "MATH 301", "MATH 221"]},
-                {"semester": "Spring Year 2", "courses": ["MATH 302", "MATH 401", "STAT 355"]}
-            ],
-            "alternatives": []
-        }
-    }
-    
-    return paths.get(major, paths["computer-science"])
 
 @app.get("/dashboard/study-groups")
 async def get_study_groups():
@@ -1374,72 +1753,6 @@ async def get_course_recommendations(request: CourseRecommendationRequest):
     except Exception as e:
         logger.error(f"Error getting course recommendations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-# Course Planning Routes
-@app.get("/course-planning")
-async def serve_course_planning():
-    """Serve the course planning page"""
-    planning_file = os.path.join("..", "frontend", "course-planning.html")
-    if os.path.exists(planning_file):
-        return FileResponse(planning_file)
-    return {"message": "Course planning page not found"}
-
-@app.get("/course-planning.html")
-async def serve_course_planning_html():
-    """Serve the course planning page with .html extension"""
-    planning_file = os.path.join("..", "frontend", "course-planning.html")
-    if os.path.exists(planning_file):
-        return FileResponse(planning_file)
-    return {"message": "Course planning page not found"}
-
-@app.get("/course-planning.js")
-async def get_course_planning_script():
-    return FileResponse(os.path.join("..", "frontend", "course-planning.js"))
-
-@app.get("/course-planning.css")
-async def get_course_planning_styles():
-    return FileResponse(os.path.join("..", "frontend", "course-planning.css"))
-
-# AI Advisory Chatbot API endpoints
-@app.get("/ai-advisory")
-async def serve_ai_advisory():
-    """Serve the AI advisory chatbot page"""
-    advisory_file = os.path.join("..", "frontend", "AI_advisory.html")
-    if os.path.exists(advisory_file):
-        return FileResponse(advisory_file)
-    return {"message": "AI advisory page not found"}
-
-@app.get("/ai-advisory.html")
-async def serve_ai_advisory_html():
-    """Serve the AI advisory page with .html extension"""
-    advisory_file = os.path.join("..", "frontend", "AI_advisory.html")
-    if os.path.exists(advisory_file):
-        return FileResponse(advisory_file)
-    return {"message": "AI advisory page not found"}
-
-@app.get("/risk-assessment")
-async def serve_risk_assessment():
-    """Serve the risk assessment page"""
-    assessment_file = os.path.join("..", "frontend", "risk-assessment.html")
-    if os.path.exists(assessment_file):
-        return FileResponse(assessment_file)
-    return {"message": "Risk assessment page not found"}
-
-@app.get("/risk-assessment.html")
-async def serve_risk_assessment_html():
-    """Serve the risk assessment page with .html extension"""
-    assessment_file = os.path.join("..", "frontend", "risk-assessment.html")
-    if os.path.exists(assessment_file):
-        return FileResponse(assessment_file)
-    return {"message": "Risk assessment page not found"}
-
-@app.get("/AI_advisory.js")
-async def get_ai_advisory_script():
-    return FileResponse(os.path.join("..", "frontend", "AI_advisory.js"))
-
-@app.get("/AI_advisory.css")
-async def get_ai_advisory_styles():
-    return FileResponse(os.path.join("..", "frontend", "AI_advisory.css"))
 
 def parse_student_question(question: str) -> Dict[str, Any]:
     """Parse student question and extract intent and entities"""
