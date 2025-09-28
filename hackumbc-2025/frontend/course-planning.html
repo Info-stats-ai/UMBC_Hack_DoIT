@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Planning - UMBC Academic Advisor</title>
+    <link rel="stylesheet" href="course-planning.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>=� Course Planning Assistant</h1>
+                <p>Welcome, <span id="studentDisplayId">Student</span> - Plan your optimal course sequence</p>
+                <nav class="nav-buttons">
+                    <a href="/" class="nav-btn">Home</a>
+                    <a href="/dashboard" class="nav-btn">Dashboard</a>
+                    <a href="/student-options" class="nav-btn">Back to Options</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Student Info Display -->
+        <section id="studentInfo" class="student-info">
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>=� Current Status</h3>
+                    <div id="currentStatus">
+                        <p><strong>Enrollment Date:</strong> <span id="enrollmentDate">Loading...</span></p>
+                        <p><strong>Expected Graduation:</strong> <span id="expectedGraduation">Loading...</span></p>
+                        <p><strong>Degree:</strong> <span id="currentDegree">Loading...</span></p>
+                        <p><strong>Completed Courses:</strong> <span id="completedCount">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3><� Preferences</h3>
+                    <div id="studentPreferences">
+                        <p><strong>Learning Style:</strong> <span id="learningStyle">Loading...</span></p>
+                        <p><strong>Course Load:</strong> <span id="preferredCourseLoad">Loading...</span></p>
+                        <p><strong>Instruction Mode:</strong> <span id="instructionMode">Loading...</span></p>
+                        <p><strong>Pace:</strong> <span id="preferredPace">Loading...</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Term Selection -->
+        <section id="termSelection" class="term-selection">
+            <div class="section-header">
+                <h2>📅 Select Planning Term</h2>
+                <p>Choose the term you want to plan courses for. Course recommendations will appear after clicking "Get Recommendations".</p>
+            </div>
+            <div class="term-selection-form">
+                <div class="form-group">
+                    <label for="termSelect">Select Term:</label>
+                    <select id="termSelect" class="term-dropdown">
+                        <option value="">Choose a term...</option>
+                        <!-- Terms will be populated here -->
+                    </select>
+                </div>
+                <button id="getRecommendationsBtn" class="btn btn-primary" disabled>
+                    Get Course Recommendations
+                </button>
+            </div>
+        </section>
+
+        <!-- Course Recommendations -->
+        <section id="courseRecommendations" class="course-recommendations hidden">
+            <div class="section-header">
+                <h2>=
+ Course Recommendations for <span id="selectedTermDisplay"></span></h2>
+                <div class="filters">
+                    <label>
+                        <input type="checkbox" id="showPrereqOnly" checked>
+                        Show prerequisite courses first
+                    </label>
+                    <label>
+                        <input type="checkbox" id="respectCourseLoad" checked>
+                        Limit to reasonable course load (up to 9 credits)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="matchLearningStyle" checked>
+                        Prefer compatible faculty (50%+ match)
+                    </label>
+                </div>
+            </div>
+
+            <div class="recommendations-container">
+                <div class="recommended-courses" id="recommendedCourses">
+                    <!-- Recommended courses will be populated here -->
+                </div>
+
+                <div class="selected-courses" id="selectedCourses">
+                    <h3>=� Selected Courses</h3>
+                    <div class="selected-list" id="selectedList">
+                        <p class="empty-state">No courses selected yet</p>
+                    </div>
+                    <div class="course-summary">
+                        <p><strong>Total Credits:</strong> <span id="totalCredits">0</span></p>
+                        <p><strong>Workload Assessment:</strong> <span id="workloadAssessment">Light</span></p>
+                        <p><strong>Faculty Compatibility:</strong> <span id="facultyCompatibility">-</span></p>
+                    </div>
+                    <button id="exportPlanBtn" class="btn btn-success" disabled>Export Course Plan</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Loading recommendations...</p>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="notification" class="notification hidden">
+            <span id="notificationText"></span>
+            <button onclick="hideNotification()">&times;</button>
+        </div>
+    </div>
+
+    <script src="course-planning.js"></script>
+</body>
+</html>

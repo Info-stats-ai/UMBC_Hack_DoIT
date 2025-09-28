@@ -205,6 +205,90 @@ def get_student_course_features(student_id: str, course_id: str) -> pd.DataFrame
         logger.error(f"Error loading features: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load features: {str(e)}")
 
+def calculate_instruction_mode_compatibility(course_modes, student_preferred_mode: str) -> int:
+    """Calculate compatibility between course instruction modes and student preference"""
+    # If no course modes or student preference, return None (no score)
+    if not course_modes or not student_preferred_mode:
+        return None
+    
+    # Handle both string and list inputs
+    if isinstance(course_modes, list):
+        available_modes = [str(mode).strip() for mode in course_modes]
+    else:
+        available_modes = [str(course_modes).strip()]
+    
+    # Filter out empty or "Not specified" modes
+    available_modes = [mode for mode in available_modes if mode and mode.lower() not in ['not specified', 'none', '']]
+    
+    # If no valid modes after filtering, return None
+    if not available_modes:
+        return None
+    
+    # Direct match gets highest score
+    if student_preferred_mode in available_modes:
+        return 100
+    
+    # Check for similar modes
+    mode_similarity = {
+        'Online': ['Hybrid'],
+        'Hybrid': ['Online', 'In-person'],
+        'In-person': ['Hybrid']
+    }
+    
+    similar_modes = mode_similarity.get(student_preferred_mode, [])
+    for mode in available_modes:
+        if mode in similar_modes:
+            return 80
+    
+    return 60  # Lower score for incompatible modes
+
+def calculate_faculty_compatibility(faculty_teaching_style, student_learning_style: str) -> int:
+    """Calculate compatibility between faculty teaching style and student learning style"""
+    if not faculty_teaching_style:
+        return 60  # Neutral score for unknown teaching style
+    
+    # Handle both string and list inputs
+    if isinstance(faculty_teaching_style, list):
+        faculty_styles = [str(style).strip() for style in faculty_teaching_style]
+    else:
+        faculty_styles = [style.strip() for style in str(faculty_teaching_style).split(',')]
+    
+    # Direct matches
+    if student_learning_style in faculty_teaching_style:
+        return 95
+    
+    # Specific style matches
+    style_matches = {
+        'Visual': ['Visual', 'Lecture', 'Presentation', 'Demonstration'],
+        'Auditory': ['Auditory', 'Lecture', 'Discussion', 'Socratic'],
+        'Kinesthetic': ['Kinesthetic', 'Hands-on', 'Project-Based', 'Lab', 'Workshop'],
+        'Reading-Writing': ['Reading', 'Writing', 'Text-based', 'Written']
+    }
+    
+    student_styles = style_matches.get(student_learning_style, [])
+    
+    # Check for partial matches
+    for faculty_style in faculty_styles:
+        for student_style in student_styles:
+            if student_style.lower() in faculty_style.lower():
+                return 85
+    
+    # Check for complementary styles
+    complementary_styles = {
+        'Visual': ['Lecture', 'Presentation', 'Demonstration'],
+        'Auditory': ['Lecture', 'Discussion', 'Socratic'],
+        'Kinesthetic': ['Project-Based', 'Lab', 'Workshop', 'Hands-on'],
+        'Reading-Writing': ['Text-based', 'Written', 'Reading']
+    }
+    
+    student_complementary = complementary_styles.get(student_learning_style, [])
+    for faculty_style in faculty_styles:
+        for comp_style in student_complementary:
+            if comp_style.lower() in faculty_style.lower():
+                return 75
+    
+    return 40  # Low compatibility for no matches
+
 def generate_recommendations(prediction_result: int, confidence: float) -> List[str]:
     """Generate recommendations based on prediction"""
     if prediction_result == 1:  # Low risk (success predicted)
@@ -554,6 +638,270 @@ async def get_predictions():
     }
     
     return predictions
+
+# Course Planning API endpoints
+@app.get("/api/student-info/{student_id}")
+async def get_student_info(student_id: str):
+    """Get comprehensive student information for course planning"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # Get student basic info and current enrollment
+            student_query = """
+            MATCH (s:Student {id: $student_id})
+            OPTIONAL MATCH (s)-[:PURSUING]->(d:Degree)
+            OPTIONAL MATCH (s)-[:COMPLETED]->(completed_courses:Course)
+            RETURN s.id as student_id,
+                   s.learningStyle as learning_style,
+                   s.preferredCourseLoad as preferred_course_load,
+                   s.preferredInstructionMode as instruction_mode,
+                   s.preferredPace as preferred_pace,
+                   s.enrollmentDate as enrollment_date,
+                   s.expectedGraduation as expected_graduation,
+                   d.name as degree,
+                   count(completed_courses) as completed_courses_count
+            """
+
+            result = session.run(student_query, {"student_id": student_id})
+            student_record = result.single()
+
+            if not student_record:
+                raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+
+            return {
+                "student_id": student_record["student_id"],
+                "learning_style": student_record["learning_style"],
+                "preferred_course_load": student_record["preferred_course_load"],
+                "instruction_mode": student_record["instruction_mode"],
+                "preferred_pace": student_record["preferred_pace"],
+                "enrollment_date": student_record["enrollment_date"],
+                "expected_graduation": student_record["expected_graduation"],
+                "degree": student_record["degree"],
+                "completed_courses_count": student_record["completed_courses_count"]
+            }
+
+    except Exception as e:
+        logger.error(f"Error getting student info: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/terms")
+async def get_available_terms():
+    """Get all available terms for course planning"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            terms_query = """
+            MATCH (t:Term)
+            RETURN t.id as id, t.name as name, t.type as type
+            ORDER BY t.name
+            """
+
+            result = session.run(terms_query)
+            terms = []
+            for record in result:
+                terms.append({
+                    "id": record["id"],
+                    "name": record["name"],
+                    "status": "available"
+                })
+
+            return terms
+
+    except Exception as e:
+        logger.error(f"Error getting terms: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class CourseRecommendationRequest(BaseModel):
+    student_id: str
+    term_id: str
+
+@app.post("/api/course-recommendations")
+async def get_course_recommendations(request: CourseRecommendationRequest):
+    """Get course recommendations for a student in a specific term"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # Get student's completed courses and preferences
+            student_data_query = """
+            MATCH (s:Student {id: $student_id})
+            OPTIONAL MATCH (s)-[:COMPLETED]->(completed:Course)
+            OPTIONAL MATCH (s)-[:PURSUING]->(d:Degree)
+            RETURN s.learningStyle as learning_style,
+                   s.preferredCourseLoad as preferred_course_load,
+                   collect(completed.id) as completed_courses,
+                   d.name as degree
+            """
+
+            student_result = session.run(student_data_query, {"student_id": request.student_id})
+            student_data = student_result.single()
+
+            if not student_data:
+                raise HTTPException(status_code=404, detail=f"Student {request.student_id} not found")
+
+            completed_courses = student_data["completed_courses"] or []
+            learning_style = student_data["learning_style"]
+
+            # Get courses offered in the selected term, prioritizing degree-relevant courses
+            courses_query = """
+            MATCH (c:Course)-[:OFFERED_IN]->(t:Term {id: $term_id})
+            WHERE NOT c.id IN $completed_courses
+            OPTIONAL MATCH (c)-[:PREREQUISITE_FOR]->(future_course:Course)
+            OPTIONAL MATCH (prereq:Course)-[:PREREQUISITE_FOR]->(c)
+            OPTIONAL MATCH (f:Faculty)-[:TEACHES]->(c)
+            OPTIONAL MATCH (c)-[:REQUIRED_FOR]->(d:Degree)
+            WHERE d.name = $degree_name OR d.name IS NULL
+            RETURN c.id as course_id,
+                   c.name as course_name,
+                   c.credits as credits,
+                   c.difficulty as difficulty,
+                   c.instructionMode as instruction_mode,
+                   collect(DISTINCT future_course.id) as leads_to,
+                   collect(DISTINCT future_course.name) as leads_to_names,
+                   collect(DISTINCT prereq.id) as prerequisites,
+                   collect(DISTINCT prereq.name) as prerequisite_names,
+                   collect(DISTINCT {
+                       name: f.name,
+                       teachingStyle: f.teachingStyle
+                   }) as faculty_options,
+                   CASE 
+                       WHEN c.id STARTS WITH 'CS' AND $degree_name CONTAINS 'Computer Science' THEN 100
+                       WHEN c.id STARTS WITH 'MATH' AND $degree_name CONTAINS 'Computer Science' THEN 90
+                       WHEN c.id STARTS WITH 'ENGL' AND $degree_name CONTAINS 'Computer Science' THEN 80
+                       WHEN c.id STARTS WITH 'PHYS' AND $degree_name CONTAINS 'Computer Science' THEN 70
+                       ELSE 50
+                   END as degree_relevance_score
+            ORDER BY degree_relevance_score DESC, c.id
+            """
+
+            courses_result = session.run(courses_query, {
+                "term_id": request.term_id,
+                "completed_courses": completed_courses,
+                "learning_style": learning_style,
+                "degree_name": student_data["degree"] or ""
+            })
+
+            recommendations = []
+            for record in courses_result:
+                course_id = record["course_id"]
+                prerequisites = record["prerequisites"] or []
+                prerequisite_names = record["prerequisite_names"] or []
+                leads_to = record["leads_to"] or []
+                leads_to_names = record["leads_to_names"] or []
+                faculty_options = record["faculty_options"] or []
+                instruction_mode = record["instruction_mode"]
+
+                # Check if prerequisites are met
+                missing_prerequisites = [p for p in prerequisites if p not in completed_courses]
+                is_blocked = len(missing_prerequisites) > 0
+
+                # Calculate priority score
+                degree_relevance = record["degree_relevance_score"] or 50
+                priority_score = degree_relevance  # Start with degree relevance
+
+                # Higher priority for prerequisite courses
+                if len(leads_to) > 0:
+                    priority_score += 20
+
+                # Lower priority if prerequisites missing
+                if is_blocked:
+                    priority_score -= 30
+
+                # Calculate faculty compatibility for each faculty member
+                enhanced_faculty_options = []
+                best_faculty_compatibility = 50
+                
+                if faculty_options:
+                    for faculty in faculty_options:
+                        compatibility = calculate_faculty_compatibility(
+                            faculty.get("teachingStyle", ""), 
+                            learning_style
+                        )
+                        enhanced_faculty_options.append({
+                            "name": faculty.get("name", "TBA"),
+                            "teachingStyle": faculty.get("teachingStyle", "Not specified"),
+                            "compatibility": compatibility
+                        })
+                        best_faculty_compatibility = max(best_faculty_compatibility, compatibility)
+
+                # Calculate instruction mode compatibility
+                instruction_mode_compatibility = calculate_instruction_mode_compatibility(
+                    instruction_mode, 
+                    student_data.get("preferred_instruction_mode", "")
+                )
+
+                # Recommendation reason
+                reason = "Available for registration"
+                if degree_relevance >= 90:
+                    reason = "Core requirement for your degree"
+                elif degree_relevance >= 80:
+                    reason = "Important for your degree program"
+                elif len(leads_to) > 0:
+                    reason = f"Prerequisite for {len(leads_to)} advanced courses"
+                if is_blocked:
+                    reason = f"Missing prerequisites: {', '.join(missing_prerequisites)}"
+
+                # Format instruction modes for display
+                if isinstance(instruction_mode, list):
+                    formatted_instruction_modes = ", ".join(instruction_mode)
+                else:
+                    formatted_instruction_modes = str(instruction_mode) if instruction_mode else "Not specified"
+
+                recommendations.append({
+                    "course_id": course_id,
+                    "course_name": record["course_name"],
+                    "credits": record["credits"] or 3,
+                    "difficulty": record["difficulty"],
+                    "instruction_mode": formatted_instruction_modes,
+                    "instruction_mode_compatibility": instruction_mode_compatibility,
+                    "is_prerequisite": len(leads_to) > 0,
+                    "prerequisite_for": leads_to,
+                    "prerequisite_for_names": leads_to_names,
+                    "missing_prerequisites": missing_prerequisites,
+                    "missing_prerequisite_names": [prerequisite_names[i] for i, prereq in enumerate(prerequisites) if prereq in missing_prerequisites],
+                    "is_blocked": is_blocked,
+                    "faculty_options": enhanced_faculty_options,
+                    "best_faculty_compatibility": best_faculty_compatibility,
+                    "priority_score": max(0, min(100, priority_score)),
+                    "recommendation_reason": reason,
+                    "degree_relevance": degree_relevance
+                })
+
+            return recommendations
+
+    except Exception as e:
+        logger.error(f"Error getting course recommendations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Course Planning Routes
+@app.get("/course-planning")
+async def serve_course_planning():
+    """Serve the course planning page"""
+    planning_file = os.path.join("..", "frontend", "course-planning.html")
+    if os.path.exists(planning_file):
+        return FileResponse(planning_file)
+    return {"message": "Course planning page not found"}
+
+@app.get("/course-planning.html")
+async def serve_course_planning_html():
+    """Serve the course planning page with .html extension"""
+    planning_file = os.path.join("..", "frontend", "course-planning.html")
+    if os.path.exists(planning_file):
+        return FileResponse(planning_file)
+    return {"message": "Course planning page not found"}
+
+@app.get("/course-planning.js")
+async def get_course_planning_script():
+    return FileResponse(os.path.join("..", "frontend", "course-planning.js"))
+
+@app.get("/course-planning.css")
+async def get_course_planning_styles():
+    return FileResponse(os.path.join("..", "frontend", "course-planning.css"))
 
 if __name__ == "__main__":
     import uvicorn
