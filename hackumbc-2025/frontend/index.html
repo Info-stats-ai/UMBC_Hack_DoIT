@@ -3,66 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMBC Academic Risk Predictor</title>
+    <title>UMBC Student Portal</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎓 UMBC Academic Portal</h1>
-            <p>Your gateway to personalized academic tools and AI-powered insights</p>
+            <h1>🎓 UMBC Student Portal</h1>
+            <p>Your personalized academic success platform</p>
         </header>
 
-        <main>
-            <div class="welcome-section">
-                <div class="welcome-form">
-                    <h2>Welcome to UMBC Academic Portal</h2>
-                    <p>Choose your academic tool to get started</p>
-                    
-                    <div class="tool-cards">
-                        <div class="tool-card">
-                            <div class="tool-icon">🤖</div>
-                            <h3>AI Academic Advisor</h3>
-                            <p>Get personalized course recommendations and academic guidance through our intelligent chatbot</p>
-                            <a href="/ai-advisory" class="tool-btn">Start Chat</a>
-                        </div>
-                        
-                        <div class="tool-card">
-                            <div class="tool-icon">📚</div>
-                            <h3>Course Planning</h3>
-                            <p>Plan your semester with intelligent course recommendations and prerequisite checking</p>
-                            <a href="/course-planning" class="tool-btn">Plan Courses</a>
-                        </div>
-                        
-                        <div class="tool-card">
-                            <div class="tool-icon">📊</div>
-                            <h3>Academic Dashboard</h3>
-                            <p>View your academic progress, risk analysis, and performance insights</p>
-                            <a href="/dashboard" class="tool-btn">View Dashboard</a>
-                        </div>
+        <div class="welcome-section">
+            <h2>Welcome to Your Academic Dashboard</h2>
+            <p>Get personalized insights, recommendations, and support for your academic journey at UMBC.</p>
+            
+            <div class="action-buttons">
+                <a href="student-login.html" class="primary-btn">
+                    <div class="btn-icon">👨‍🎓</div>
+                    <div class="btn-content">
+                        <h3>Student Login</h3>
+                        <p>Access your personalized dashboard</p>
                     </div>
-                    
-                    <div class="student-login-section">
-                        <h3>Quick Access</h3>
-                        <p>Enter your Student ID for direct access to all tools</p>
-                        <form id="studentLoginForm">
-                            <div class="form-group">
-                                <label for="studentId">Student ID:</label>
-                                <input type="text" id="studentId" name="studentId" placeholder="e.g., AB06686" required>
-                            </div>
-                            <button type="submit" id="continueBtn">Continue</button>
-                        </form>
+                </a>
+                
+                <a href="dashboard.html" class="secondary-btn">
+                    <div class="btn-icon">📊</div>
+                    <div class="btn-content">
+                        <h3>Advisor Dashboard</h3>
+                        <p>For academic advisors and staff</p>
                     </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2>What You'll Get</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Personal Analytics</h3>
+                    <p>Track your academic performance with detailed insights and trends</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>Risk Analysis</h3>
+                    <p>Get early warnings and personalized recommendations for academic success</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <h3>Smart Recommendations</h3>
+                    <p>AI-powered suggestions for courses, study strategies, and academic planning</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Study Groups</h3>
+                    <p>Connect with compatible study partners based on learning styles and performance</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your academic journey with detailed progress reports and achievements</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Goal Setting</h3>
+                    <p>Set and track academic goals with personalized action plans</p>
                 </div>
             </div>
-        </main>
-
+        </div>
 
         <footer>
-            <p>&copy; 2025 UMBC Academic Analytics Team</p>
+            <p>&copy; 2024 UMBC Student Portal. Powered by AI and personalized analytics.</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <style>
+        .welcome-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .welcome-section h2 {
+            font-size: 2.5rem;
+            margin: 0 0 20px 0;
+        }
+        
+        .welcome-section p {
+            font-size: 1.2rem;
+            margin: 0 0 30px 0;
+            opacity: 0.9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .primary-btn, .secondary-btn {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 25px 30px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.3s ease;
+            min-width: 300px;
+        }
+        
+        .primary-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .secondary-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .primary-btn:hover, .secondary-btn:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-icon {
+            font-size: 2.5rem;
+        }
+        
+        .btn-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+        }
+        
+        .btn-content p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .features-section {
+            margin: 60px 0;
+        }
+        
+        .features-section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin: 0 0 40px 0;
+            color: #2d3748;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            color: #2d3748;
+            margin: 0 0 15px 0;
+            font-size: 1.3rem;
+        }
+        
+        .feature-card p {
+            color: #718096;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .primary-btn, .secondary-btn {
+                min-width: 250px;
+            }
+        }
+    </style>
 </body>
 </html>
