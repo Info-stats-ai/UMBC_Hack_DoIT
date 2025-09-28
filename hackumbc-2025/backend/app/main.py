@@ -11,6 +11,7 @@ import os
 from typing import Dict, Any, List
 import logging
 from study_groups_service import StudyGroupsService
+from mentorship_service import MentorshipService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -124,6 +125,9 @@ except Exception as e:
 # Initialize Study Groups Service
 study_groups_service = StudyGroupsService(neo4j_driver=driver)
 
+# Initialize Mentorship Service
+mentorship_service = MentorshipService(neo4j_driver=driver)
+
 # Pydantic models
 class PredictionRequest(BaseModel):
     student_id: str
@@ -177,6 +181,56 @@ class StudyGroupsRequest(BaseModel):
     course_id: str
     min_group_size: int = 3
     max_group_size: int = 5
+
+class MentorshipRequest(BaseModel):
+    mentee_id: str
+    name: str = "Student"
+    major: str = "Computer Science"
+    year_level: int = 1
+    academic_interests: List[str] = []
+    career_goals: List[str] = []
+    skills_to_develop: List[str] = []
+    preferred_mentor_type: List[str] = ["senior_student", "faculty"]
+    learning_style: str = "Visual"
+    availability: str = "Flexible"
+    goals: str = "Academic and career guidance"
+
+class MentorProfileResponse(BaseModel):
+    mentor_id: str
+    name: str
+    mentor_type: str
+    department: str
+    major: str
+    year_level: int
+    research_interests: List[str]
+    industry_experience: List[str]
+    skills: List[str]
+    availability: str
+    contact_info: str
+    bio: str
+    mentoring_capacity: int
+    current_mentees: int
+    rating: float
+    specializations: List[str]
+
+class MentorshipMatchResponse(BaseModel):
+    match_id: str
+    mentor: MentorProfileResponse
+    compatibility_score: float
+    compatibility_factors: Dict[str, float]
+    match_type: str
+    recommended_meeting_frequency: str
+    suggested_activities: List[str]
+    goals: List[str]
+
+class MentorshipProgramRequest(BaseModel):
+    name: str
+    description: str = ""
+    duration: str = "1 semester"
+    target_audience: str = "All students"
+    mentor_requirements: List[str] = []
+    activities: List[str] = []
+    goals: List[str] = []
 
 # Helper functions
 def get_student_course_features(student_id: str, course_id: str) -> pd.DataFrame:
@@ -415,6 +469,30 @@ async def get_study_groups_styles():
 async def get_study_groups_script():
     return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
 
+@app.get("/mentorship")
+async def serve_mentorship():
+    """Serve the mentorship page"""
+    mentorship_file = os.path.join("..", "frontend", "mentorship.html")
+    if os.path.exists(mentorship_file):
+        return FileResponse(mentorship_file)
+    return {"message": "Mentorship page not found"}
+
+@app.get("/mentorship.html")
+async def serve_mentorship_html():
+    """Serve the mentorship page with .html extension"""
+    mentorship_file = os.path.join("..", "frontend", "mentorship.html")
+    if os.path.exists(mentorship_file):
+        return FileResponse(mentorship_file)
+    return {"message": "Mentorship page not found"}
+
+@app.get("/mentorship.css")
+async def get_mentorship_styles():
+    return FileResponse(os.path.join("..", "frontend", "mentorship.css"))
+
+@app.get("/mentorship.js")
+async def get_mentorship_script():
+    return FileResponse(os.path.join("..", "frontend", "mentorship.js"))
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -611,6 +689,116 @@ async def get_study_groups_for_course(course_id: str):
     except Exception as e:
         logger.error(f"Error getting study groups for course {course_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get study groups: {str(e)}")
+
+# Mentorship API endpoints
+@app.post("/mentorship/find-mentors", response_model=List[MentorshipMatchResponse])
+async def find_mentors(request: MentorshipRequest):
+    """Find compatible mentors for a mentee"""
+    try:
+        matches = mentorship_service.find_mentors(request.dict())
+        
+        # Convert to response format
+        match_responses = []
+        for match in matches:
+            mentor_response = MentorProfileResponse(
+                mentor_id=match.mentor.mentor_id,
+                name=match.mentor.name,
+                mentor_type=match.mentor.mentor_type,
+                department=match.mentor.department,
+                major=match.mentor.major,
+                year_level=match.mentor.year_level,
+                research_interests=match.mentor.research_interests,
+                industry_experience=match.mentor.industry_experience,
+                skills=match.mentor.skills,
+                availability=match.mentor.availability,
+                contact_info=match.mentor.contact_info,
+                bio=match.mentor.bio,
+                mentoring_capacity=match.mentor.mentoring_capacity,
+                current_mentees=match.mentor.current_mentees,
+                rating=match.mentor.rating,
+                specializations=match.mentor.specializations
+            )
+            
+            match_response = MentorshipMatchResponse(
+                match_id=match.match_id,
+                mentor=mentor_response,
+                compatibility_score=match.compatibility_score,
+                compatibility_factors=match.compatibility_factors,
+                match_type=match.match_type,
+                recommended_meeting_frequency=match.recommended_meeting_frequency,
+                suggested_activities=match.suggested_activities,
+                goals=match.goals
+            )
+            match_responses.append(match_response)
+        
+        return match_responses
+        
+    except Exception as e:
+        logger.error(f"Error finding mentors: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to find mentors: {str(e)}")
+
+@app.get("/mentorship/statistics")
+async def get_mentorship_statistics():
+    """Get mentorship program statistics"""
+    try:
+        stats = mentorship_service.get_mentor_statistics()
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting mentorship statistics: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
+
+@app.post("/mentorship/create-program")
+async def create_mentorship_program(request: MentorshipProgramRequest):
+    """Create a new mentorship program"""
+    try:
+        program = mentorship_service.create_mentorship_program(request.dict())
+        return program
+        
+    except Exception as e:
+        logger.error(f"Error creating mentorship program: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create program: {str(e)}")
+
+@app.get("/mentorship/mentors/types")
+async def get_mentor_types():
+    """Get available mentor types and their counts"""
+    try:
+        stats = mentorship_service.get_mentor_statistics()
+        return {
+            "mentor_types": [
+                {
+                    "type": "senior_student",
+                    "display_name": "Senior Students",
+                    "count": stats["senior_student_mentors"],
+                    "description": "4th year students who can provide peer guidance and academic support"
+                },
+                {
+                    "type": "faculty",
+                    "display_name": "Faculty Members",
+                    "count": stats["faculty_mentors"],
+                    "description": "Professors and instructors offering research and academic guidance"
+                },
+            ],
+            "total_mentors": stats["total_mentors"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting mentor types: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get mentor types: {str(e)}")
+
+@app.get("/student/{student_id}")
+async def get_student_details(student_id: str):
+    """Get student details by ID"""
+    try:
+        student_details = mentorship_service.get_student_details(student_id)
+        if not student_details:
+            raise HTTPException(status_code=404, detail="Student not found")
+        return student_details
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting student details for {student_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get student details: {str(e)}")
 
 # Dashboard API endpoints
 @app.get("/dashboard")

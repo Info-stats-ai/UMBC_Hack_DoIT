@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentorship Program - UMBC Academic Success Platform</title>
+    <link rel="stylesheet" href="mentorship.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>UMBC Academic Success</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/student-options" class="nav-link">Student Portal</a>
+                <a href="/study-groups" class="nav-link">Study Groups</a>
+                <a href="/mentorship" class="nav-link active">Mentorship</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="container">
+                <h1 class="page-title">
+                    <i class="fas fa-handshake"></i>
+                    Mentorship Program
+                </h1>
+                <p class="page-subtitle">
+                    Connect with experienced mentors for academic guidance, career insights, and professional development
+                </p>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="container">
+                <div class="stats-grid" id="stats-grid">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Find Mentor Section -->
+        <div class="find-mentor-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2><i class="fas fa-search"></i> Find Your Perfect Mentor</h2>
+                    <p>Tell us about yourself and we'll match you with compatible mentors</p>
+                </div>
+
+                <div class="mentor-form-card">
+                    <form id="mentorship-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="mentee-id">Student ID</label>
+                                <input type="text" id="mentee-id" name="mentee_id" placeholder="Enter your student ID" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="student-name">Name</label>
+                                <input type="text" id="student-name" name="name" placeholder="Enter your name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="major">Major</label>
+                                <select id="major" name="major">
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Biology">Biology</option>
+                                    <option value="Chemistry">Chemistry</option>
+                                    <option value="Physics">Physics</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Psychology">Psychology</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="year-level">Year Level</label>
+                                <select id="year-level" name="year_level">
+                                    <option value="1">Freshman (1st Year)</option>
+                                    <option value="2">Sophomore (2nd Year)</option>
+                                    <option value="3">Junior (3rd Year)</option>
+                                    <option value="4">Senior (4th Year)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="academic-interests">Academic Interests</label>
+                                <input type="text" id="academic-interests" name="academic_interests" 
+                                       placeholder="e.g., Machine Learning, Data Science, Cybersecurity" 
+                                       data-tooltip="Separate multiple interests with commas">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="career-goals">Career Goals</label>
+                                <input type="text" id="career-goals" name="career_goals" 
+                                       placeholder="e.g., Software Engineer, Data Scientist, Researcher"
+                                       data-tooltip="Separate multiple goals with commas">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="skills-to-develop">Skills to Develop</label>
+                                <input type="text" id="skills-to-develop" name="skills_to_develop" 
+                                       placeholder="e.g., Python, Leadership, Communication"
+                                       data-tooltip="Separate multiple skills with commas">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="preferred-mentor-types">Preferred Mentor Types</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="preferred_mentor_type" value="senior_student" checked>
+                                        <span class="checkmark"></span>
+                                        Senior Students
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="preferred_mentor_type" value="faculty" checked>
+                                        <span class="checkmark"></span>
+                                        Faculty Members
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="availability">Availability</label>
+                                <select id="availability" name="availability">
+                                    <option value="Flexible">Flexible</option>
+                                    <option value="Weekdays">Weekdays</option>
+                                    <option value="Weekends">Weekends</option>
+                                    <option value="Evenings">Evenings</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label for="goals">Mentorship Goals</label>
+                                <textarea id="goals" name="goals" rows="3" 
+                                          placeholder="What do you hope to achieve through mentorship?"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-search"></i>
+                                Find Mentors
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="results-section" style="display: none;">
+            <div class="container">
+                <div class="results-header">
+                    <h2><i class="fas fa-users"></i> Your Mentor Matches</h2>
+                    <div class="results-count">
+                        <span id="matches-count">0</span> mentors found
+                    </div>
+                </div>
+
+                <!-- Mentor Type Filters -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All Mentors</button>
+                    <button class="filter-tab" data-filter="senior_student">Senior Students</button>
+                    <button class="filter-tab" data-filter="faculty">Faculty</button>
+                </div>
+
+                <div id="mentors-grid" class="mentors-grid">
+                    <!-- Mentor cards will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading-container" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Finding your perfect mentors...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-container" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error</h3>
+            <p id="error-text"></p>
+        </div>
+
+        <!-- Mentor Types Info Section -->
+        <div class="mentor-types-section">
+            <div class="container">
+                <h2 class="section-title">Types of Mentors</h2>
+                <div class="mentor-types-grid">
+                    <div class="mentor-type-card">
+                        <div class="type-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h3>Senior Students</h3>
+                        <p>4th year students who understand the academic journey and can provide peer guidance on course selection, study strategies, and campus life.</p>
+                        <ul>
+                            <li>Academic planning support</li>
+                            <li>Study techniques and time management</li>
+                            <li>Campus resource navigation</li>
+                            <li>Peer networking opportunities</li>
+                        </ul>
+                    </div>
+
+                    <div class="mentor-type-card">
+                        <div class="type-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <h3>Faculty Members</h3>
+                        <p>Professors and instructors offering research opportunities, academic guidance, and insights into graduate school preparation.</p>
+                        <ul>
+                            <li>Research opportunity discussions</li>
+                            <li>Graduate school preparation</li>
+                            <li>Academic career guidance</li>
+                            <li>Professional development</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits Section -->
+        <div class="benefits-section">
+            <div class="container">
+                <h2 class="section-title">Benefits of Mentorship</h2>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <i class="fas fa-bullseye"></i>
+                        <h4>Clear Goal Setting</h4>
+                        <p>Work with mentors to set and achieve specific academic and career objectives.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <i class="fas fa-lightbulb"></i>
+                        <h4>Expert Insights</h4>
+                        <p>Gain valuable knowledge from experienced professionals and academics.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Accelerated Growth</h4>
+                        <p>Develop skills and knowledge faster with personalized guidance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>UMBC Academic Success Platform</h4>
+                    <p>Connecting students with mentors for academic and professional success.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Mentorship Program</h4>
+                    <ul>
+                        <li><a href="#mentor-matching">Mentor Matching</a></li>
+                        <li><a href="#program-benefits">Program Benefits</a></li>
+                        <li><a href="#mentor-types">Mentor Types</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Mentorship Guide</a></li>
+                        <li><a href="#">Success Stories</a></li>
+                        <li><a href="#">Program FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 UMBC Academic Success Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mentor Details Modal -->
+    <div id="mentor-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Mentor Details</h3>
+                <span class="close" onclick="closeMentorModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="mentor-details">
+                    <!-- Mentor details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="connectWithMentor()">
+                    <i class="fas fa-envelope"></i>
+                    Connect with Mentor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="mentorship.js"></script>
+</body>
+</html>

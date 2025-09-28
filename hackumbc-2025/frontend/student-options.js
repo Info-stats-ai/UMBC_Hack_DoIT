@@ -212,3 +212,13 @@ function clearResults() {
         courseIdInput.value = '';
     }
 }
+
+function goToMentorship() {
+    // Store student ID in session storage for persistence
+    if (currentStudentId) {
+        sessionStorage.setItem('studentId', currentStudentId);
+        window.location.href = `/mentorship?student_id=${currentStudentId}`;
+    } else {
+        window.location.href = '/mentorship';
+    }
+}
