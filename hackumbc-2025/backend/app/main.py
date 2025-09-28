@@ -37,6 +37,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Define mentorship routes first (before static mount)
+@app.get("/mentorship")
+async def serve_mentorship():
+    """Serve the mentorship page"""
+    try:
+        mentorship_file = os.path.join("..", "frontend", "mentorship.html")
+        logger.info(f"Looking for mentorship file at: {mentorship_file}")
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"File exists: {os.path.exists(mentorship_file)}")
+        if os.path.exists(mentorship_file):
+            return FileResponse(mentorship_file)
+        else:
+            logger.error(f"Mentorship file not found at: {mentorship_file}")
+            return {"message": "Mentorship page not found", "path": mentorship_file, "cwd": os.getcwd()}
+    except Exception as e:
+        logger.error(f"Error serving mentorship page: {e}")
+        return {"message": f"Error: {str(e)}"}
+
+@app.get("/mentorship.html")
+async def serve_mentorship_html():
+    """Serve the mentorship page with .html extension"""
+    mentorship_file = os.path.join("..", "frontend", "mentorship.html")
+    if os.path.exists(mentorship_file):
+        return FileResponse(mentorship_file)
+    return {"message": "Mentorship page not found"}
+
+@app.get("/mentorship.css")
+async def get_mentorship_styles():
+    return FileResponse(os.path.join("..", "frontend", "mentorship.css"))
+
+@app.get("/mentorship.js")
+async def get_mentorship_script():
+    return FileResponse(os.path.join("..", "frontend", "mentorship.js"))
+
 # Mount static files (frontend)
 frontend_path = os.path.join("..", "frontend")
 if os.path.exists(frontend_path):
@@ -554,7 +588,7 @@ if os.path.exists(frontend_path):
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "umbctest123"  # Default password - change this to your Neo4j password
+NEO4J_PASSWORD = "Harsh@0603"  # Default password - change this to your Neo4j password
 NEO4J_DB = "neo4j"
 
 # Gemini API configuration
@@ -955,30 +989,6 @@ async def get_study_groups_styles():
 @app.get("/study-groups.js")
 async def get_study_groups_script():
     return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
-
-@app.get("/mentorship")
-async def serve_mentorship():
-    """Serve the mentorship page"""
-    mentorship_file = os.path.join("..", "frontend", "mentorship.html")
-    if os.path.exists(mentorship_file):
-        return FileResponse(mentorship_file)
-    return {"message": "Mentorship page not found"}
-
-@app.get("/mentorship.html")
-async def serve_mentorship_html():
-    """Serve the mentorship page with .html extension"""
-    mentorship_file = os.path.join("..", "frontend", "mentorship.html")
-    if os.path.exists(mentorship_file):
-        return FileResponse(mentorship_file)
-    return {"message": "Mentorship page not found"}
-
-@app.get("/mentorship.css")
-async def get_mentorship_styles():
-    return FileResponse(os.path.join("..", "frontend", "mentorship.css"))
-
-@app.get("/mentorship.js")
-async def get_mentorship_script():
-    return FileResponse(os.path.join("..", "frontend", "mentorship.js"))
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
