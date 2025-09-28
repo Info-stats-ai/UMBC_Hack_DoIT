@@ -59,7 +59,7 @@ if os.path.exists(frontend_path):
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "Harsh@0603"  # Default password - change this to your Neo4j password
+NEO4J_PASSWORD = "umbctest123"  # Default password - change this to your Neo4j password
 NEO4J_DB = "neo4j"
 
 # Gemini API configuration
@@ -438,55 +438,6 @@ async def health_check():
         features_count=len(feature_names) if feature_names else 0
     )
 
-@app.post("/predict", response_model=PredictionResponse)
-async def predict_student_risk(request: PredictionRequest):
-    """Predict academic risk for a student-course pair"""
-    
-    if not model:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
-    try:
-        # Get features from Neo4j
-        df = get_student_course_features(request.student_id, request.course_id)
-        
-        # Prepare features for prediction
-        feature_data = []
-        for feature in feature_names:
-            if feature in df.columns:
-                feature_data.append(df[feature].iloc[0])
-            else:
-                feature_data.append(0.0)  # Default value for missing features
-        
-        # Make prediction
-        X = np.array([feature_data])
-        prediction_proba = model.predict_proba(X)[0]
-        prediction_result = model.predict(X)[0]
-        confidence = max(prediction_proba)
-        
-        # Determine risk level
-        risk_level = "Low Risk (High Success Expected)" if prediction_result == 1 else "High Risk (Support Needed)"
-        
-        # Generate recommendations
-        recommendations = generate_recommendations(prediction_result, confidence)
-        
-        return PredictionResponse(
-            student_id=request.student_id,
-            course_id=request.course_id,
-            prediction_result=int(prediction_result),
-            confidence=float(confidence),
-            risk_level=risk_level,
-            probability={
-                "high_risk": float(prediction_proba[0]),
-                "low_risk": float(prediction_proba[1])
-            },
-            recommendations=recommendations
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Prediction error: {e}")
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 @app.get("/students")
 async def get_available_students():
@@ -1127,6 +1078,22 @@ async def serve_ai_advisory_html():
     if os.path.exists(advisory_file):
         return FileResponse(advisory_file)
     return {"message": "AI advisory page not found"}
+
+@app.get("/risk-assessment")
+async def serve_risk_assessment():
+    """Serve the risk assessment page"""
+    assessment_file = os.path.join("..", "frontend", "risk-assessment.html")
+    if os.path.exists(assessment_file):
+        return FileResponse(assessment_file)
+    return {"message": "Risk assessment page not found"}
+
+@app.get("/risk-assessment.html")
+async def serve_risk_assessment_html():
+    """Serve the risk assessment page with .html extension"""
+    assessment_file = os.path.join("..", "frontend", "risk-assessment.html")
+    if os.path.exists(assessment_file):
+        return FileResponse(assessment_file)
+    return {"message": "Risk assessment page not found"}
 
 @app.get("/AI_advisory.js")
 async def get_ai_advisory_script():
@@ -1929,6 +1896,91 @@ async def get_similar_students(student_id: str):
     except Exception as e:
         logger.error(f"Error getting similar students: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting similar students: {str(e)}")
+
+
+@app.get("/api/risk-prediction/{student_id}/{course_id}")
+async def get_risk_prediction(student_id: str, course_id: str):
+    """Get risk prediction for a student-course pair from existing risk relationships"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # Query for existing risk relationship data
+            risk_query = """
+            MATCH (s:Student {id: $student_id})-[r:RISK]->(c:Course {id: $course_id})
+            RETURN r.course_difficulty as course_difficulty,
+                   r.historical_performance as historical_performance,
+                   r.learning_style_match as learning_style_match,
+                   r.pass_probability as pass_probability,
+                   r.risk_level as risk_level,
+                   r.risk_score as risk_score,
+                   r.similar_students_performance as similar_students_performance,
+                   r.student_gpa as student_gpa,
+                   r.workload_compatibility as workload_compatibility,
+                   c.name as course_name,
+                   s.learningStyle as student_learning_style
+            """
+
+            result = session.run(risk_query, {"student_id": student_id, "course_id": course_id})
+            risk_data = result.single()
+
+            if not risk_data:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"No risk data found for student {student_id} and course {course_id}"
+                )
+
+            return {
+                "student_id": student_id,
+                "course_id": course_id,
+                "course_name": risk_data["course_name"],
+                "course_difficulty": risk_data["course_difficulty"],
+                "historical_performance": risk_data["historical_performance"],
+                "learning_style_match": risk_data["learning_style_match"],
+                "pass_probability": risk_data["pass_probability"],
+                "risk_level": risk_data["risk_level"],
+                "risk_score": risk_data["risk_score"],
+                "similar_students_performance": risk_data["similar_students_performance"],
+                "student_gpa": risk_data["student_gpa"],
+                "workload_compatibility": risk_data["workload_compatibility"],
+                "student_learning_style": risk_data["student_learning_style"]
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting risk prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/available-courses")
+async def get_available_courses_for_risk():
+    """Get list of courses available for risk prediction"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            courses_query = """
+            MATCH (c:Course)
+            RETURN c.id as course_id, c.name as course_name
+            ORDER BY c.id
+            LIMIT 50
+            """
+
+            result = session.run(courses_query)
+            courses = []
+            for record in result:
+                courses.append({
+                    "course_id": record["course_id"],
+                    "course_name": record["course_name"]
+                })
+
+            return courses
+
+    except Exception as e:
+        logger.error(f"Error getting available courses: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

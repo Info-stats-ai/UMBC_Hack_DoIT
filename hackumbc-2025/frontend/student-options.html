@@ -66,45 +66,6 @@
                 </div>
             </div>
 
-            <!-- Risk Prediction Form (Hidden by default) -->
-            <div id="riskPredictionSection" class="risk-prediction-section hidden">
-                <div class="section-header">
-                    <h2>🔮 Academic Risk Prediction</h2>
-                    <button class="back-btn" onclick="closeRiskPrediction()">← Back to Options</button>
-                </div>
-                
-                <div class="prediction-form">
-                    <form id="predictionForm">
-                        <div class="form-group">
-                            <label for="courseId">Course ID:</label>
-                            <input type="text" id="courseId" name="courseId" placeholder="e.g., CSEE 200" required>
-                        </div>
-                        <button type="submit" id="predictBtn">🔮 Predict Risk</button>
-                    </form>
-                </div>
-
-                <div id="loading" class="loading hidden">
-                    <div class="spinner"></div>
-                    <p>Analyzing student data and course patterns...</p>
-                </div>
-
-                <div id="results" class="results hidden">
-                    <h3>Prediction Results</h3>
-                    <div class="result-card">
-                        <div class="risk-level" id="riskLevel"></div>
-                        <div class="confidence-score">
-                            <span class="label">Confidence:</span>
-                            <span class="score" id="confidenceScore"></span>
-                        </div>
-                        <div class="recommendations" id="recommendations"></div>
-                    </div>
-                </div>
-
-                <div id="error" class="error hidden">
-                    <h3>❌ Error</h3>
-                    <p id="errorMessage"></p>
-                </div>
-            </div>
         </main>
 
         <footer>

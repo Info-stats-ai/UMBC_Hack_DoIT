@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment - UMBC</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .risk-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .risk-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .submit-btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: #0056b3;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .results {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .risk-score {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .risk-score-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .risk-level-low { color: #28a745; }
+        .risk-level-medium { color: #ffc107; }
+        .risk-level-high { color: #dc3545; }
+        .risk-level-very_high { color: #dc3545; }
+
+        .risk-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .detail-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="risk-container">
+            <a href="/" class="back-btn">← Back to Home</a>
+
+            <h1>🎯 Risk Assessment</h1>
+            <p>Enter a course ID to assess your academic risk for that course.</p>
+
+            <div class="risk-form">
+                <form id="riskForm">
+                    <div class="form-group">
+                        <label for="studentId">Student ID:</label>
+                        <input type="text" id="studentId" name="studentId" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseId">Course ID:</label>
+                        <input type="text" id="courseId" name="courseId" placeholder="e.g., CSEE200, MATH151" required>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        🎯 Assess Risk
+                    </button>
+                </form>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Analyzing risk assessment...</p>
+            </div>
+
+            <div id="error" class="error hidden">
+                <h3>❌ Error</h3>
+                <p id="errorMessage"></p>
+            </div>
+
+            <div id="results" class="results hidden">
+                <div class="risk-score">
+                    <div class="risk-score-value" id="riskScoreValue">--</div>
+                    <div class="risk-level" id="riskLevel">Risk Level</div>
+                    <div style="margin-top: 10px;">
+                        <strong>Pass Probability: <span id="passProbability">--%</span></strong>
+                    </div>
+                </div>
+
+                <div class="risk-details">
+                    <div class="detail-card">
+                        <div class="detail-label">Student GPA</div>
+                        <div class="detail-value" id="studentGPA">--</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">Course Difficulty</div>
+                        <div class="detail-value" id="courseDifficulty">--</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">Learning Style Match</div>
+                        <div class="detail-value" id="learningStyleMatch">--%</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">Workload Compatibility</div>
+                        <div class="detail-value" id="workloadCompatibility">--%</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">Historical Performance</div>
+                        <div class="detail-value" id="historicalPerformance">--</div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-label">Similar Students Performance</div>
+                        <div class="detail-value" id="similarStudentsPerformance">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStudentId = '';
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get student ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            currentStudentId = urlParams.get('studentId') || '';
+
+            // Display student ID
+            const studentIdInput = document.getElementById('studentId');
+            if (studentIdInput) {
+                studentIdInput.value = currentStudentId;
+            }
+
+            // Check if student ID is provided
+            if (!currentStudentId) {
+                showError('No student ID provided. Please go back to the home page and enter your student ID.');
+                document.getElementById('submitBtn').disabled = true;
+                return;
+            }
+
+            // Initialize form handler
+            document.getElementById('riskForm').addEventListener('submit', handleRiskAssessment);
+        });
+
+        async function handleRiskAssessment(event) {
+            event.preventDefault();
+
+            const courseId = document.getElementById('courseId').value.trim();
+
+            if (!courseId) {
+                showError('Please enter a course ID.');
+                return;
+            }
+
+            // Show loading state
+            showLoading();
+
+            try {
+                const response = await fetch(`/api/risk-prediction/${currentStudentId}/${courseId}`);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Risk assessment failed');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Risk assessment error:', error);
+                showError(`Risk assessment failed: ${error.message}`);
+            }
+        }
+
+        function displayResults(data) {
+            hideLoading();
+            hideError();
+
+            // Display risk score and level
+            const riskScorePercent = (data.risk_score * 100).toFixed(1);
+            document.getElementById('riskScoreValue').textContent = `${riskScorePercent}%`;
+
+            const riskLevelElement = document.getElementById('riskLevel');
+            riskLevelElement.textContent = data.risk_level;
+            riskLevelElement.className = `risk-level risk-level-${data.risk_level.toLowerCase()}`;
+
+            // Display pass probability
+            const passProbabilityPercent = (data.pass_probability * 100).toFixed(1);
+            document.getElementById('passProbability').textContent = `${passProbabilityPercent}%`;
+
+            // Display detailed factors
+            document.getElementById('studentGPA').textContent = data.student_gpa.toFixed(2);
+            document.getElementById('courseDifficulty').textContent = `${data.course_difficulty}/5`;
+            document.getElementById('learningStyleMatch').textContent = `${(data.learning_style_match * 100).toFixed(0)}%`;
+            document.getElementById('workloadCompatibility').textContent = `${(data.workload_compatibility * 100).toFixed(0)}%`;
+            document.getElementById('historicalPerformance').textContent = data.historical_performance.toFixed(2);
+            document.getElementById('similarStudentsPerformance').textContent = data.similar_students_performance.toFixed(2);
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            hideError();
+            hideResults();
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showError(message) {
+            hideLoading();
+            hideResults();
+
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function hideResults() {
+            document.getElementById('results').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
