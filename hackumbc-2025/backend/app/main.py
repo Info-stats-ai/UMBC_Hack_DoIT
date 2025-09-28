@@ -133,6 +133,10 @@ if os.path.exists(frontend_path):
     async def get_study_groups_script():
         return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
     
+    @app.get("/umbc_logo.jpg")
+    async def get_umbc_logo():
+        return FileResponse(os.path.join("..", "frontend", "umbc_logo.jpg"))
+    
     @app.get("/students")
     async def get_available_students():
         """Get list of available students"""
