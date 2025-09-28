@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function getStudentId() {
     // First check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    let studentId = urlParams.get('student_id');
+    let studentId = urlParams.get('studentId');
     
     // If not in URL, check session storage
     if (!studentId) {

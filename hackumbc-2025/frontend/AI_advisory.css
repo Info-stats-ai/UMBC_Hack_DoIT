@@ -7,7 +7,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     color: #333;
 }
@@ -43,7 +44,7 @@ body {
 
 .logo i {
     font-size: 2rem;
-    color: #667eea;
+    color: #283593;
 }
 
 .logo h1 {
@@ -120,7 +121,7 @@ body {
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #283593;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -139,7 +140,7 @@ body {
 .sample-ids .note {
     margin-top: 0.5rem;
     font-size: 0.8rem;
-    color: #667eea;
+    color: #283593;
     font-style: italic;
 }
 
@@ -161,9 +162,9 @@ body {
 }
 
 .sample-btn:hover {
-    background: #667eea;
+    background: #283593;
     color: white;
-    border-color: #667eea;
+    border-color: #283593;
 }
 
 /* Chat Container */
@@ -180,7 +181,7 @@ body {
 }
 
 .chat-header {
-    background: #667eea;
+    background: #283593;
     color: white;
     padding: 1rem 1.5rem;
     display: flex;
@@ -246,13 +247,13 @@ body {
 }
 
 .user-message .message-avatar {
-    background: #667eea;
+    background: #283593;
     color: white;
 }
 
 .bot-message .message-avatar {
     background: #f8f9fa;
-    color: #667eea;
+    color: #283593;
     border: 2px solid #e1e5e9;
 }
 
@@ -270,7 +271,7 @@ body {
 }
 
 .user-message .message-text {
-    background: #667eea;
+    background: #283593;
     color: white;
     border-bottom-right-radius: 4px;
 }
@@ -330,9 +331,9 @@ body {
 }
 
 .quick-btn:hover {
-    background: #667eea;
+    background: #283593;
     color: white;
-    border-color: #667eea;
+    border-color: #283593;
     transform: translateY(-2px);
 }
 
@@ -360,7 +361,7 @@ body {
 }
 
 .chat-input input:focus {
-    border-color: #667eea;
+    border-color: #283593;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -368,7 +369,7 @@ body {
     width: 45px;
     height: 45px;
     border: none;
-    background: #667eea;
+    background: #283593;
     color: white;
     border-radius: 50%;
     cursor: pointer;
@@ -408,7 +409,7 @@ body {
 .typing-dots span {
     width: 6px;
     height: 6px;
-    background: #667eea;
+    background: #283593;
     border-radius: 50%;
     animation: typing 1.4s infinite ease-in-out;
 }
@@ -434,7 +435,7 @@ body {
 
 /* Buttons */
 .btn-primary {
-    background: #667eea;
+    background: #283593;
     color: white;
     border: none;
     padding: 1rem 2rem;
@@ -457,8 +458,8 @@ body {
 
 .btn-secondary {
     background: transparent;
-    color: #667eea;
-    border: 1px solid #667eea;
+    color: #283593;
+    border: 1px solid #283593;
     padding: 0.5rem 1rem;
     border-radius: 8px;
     cursor: pointer;
@@ -467,7 +468,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background: #667eea;
+    background: #283593;
     color: white;
 }
 
@@ -510,7 +511,7 @@ body {
 
 .loading-spinner i {
     font-size: 2rem;
-    color: #667eea;
+    color: #283593;
     margin-bottom: 1rem;
 }
 

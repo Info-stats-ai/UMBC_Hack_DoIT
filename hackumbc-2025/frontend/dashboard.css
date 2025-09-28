@@ -1,13 +1,14 @@
 /* Dashboard CSS - Modern Academic Analytics Dashboard */
 
 :root {
-    --primary-color: #0066cc;
-    --secondary-color: #004499;
-    --accent-color: #00cc66;
+    --primary-color: #283593;
+    --secondary-color: #1a237e;
+    --accent-color: #3949ab;
     --warning-color: #ff6b35;
     --danger-color: #e74c3c;
     --success-color: #27ae60;
-    --info-color: #3498db;
+    --info-color: #5c6bc0;
+    --linear-gradient: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
@@ -66,7 +67,7 @@ body {
 
 /* Header Styles */
 .dashboard-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: var(--linear-gradient);
     color: white;
     padding: var(--spacing-6) 0;
     box-shadow: var(--shadow-lg);

@@ -9,7 +9,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
+    background-attachment: fixed;
     min-height: 100vh;
 }
 
@@ -37,7 +38,7 @@ body {
 }
 
 .header h1 {
-    color: #667eea;
+    color: #283593;
     margin-bottom: 0.5rem;
 }
 
@@ -53,7 +54,7 @@ body {
 }
 
 .nav-btn {
-    background: #667eea;
+    background: #283593;
     color: white;
     text-decoration: none;
     padding: 0.5rem 1rem;
@@ -63,7 +64,7 @@ body {
 }
 
 .nav-btn:hover {
-    background: #5a67d8;
+    background: #1a237e;
     transform: translateY(-2px);
 }
 
@@ -83,7 +84,7 @@ section {
 }
 
 .section-header h2 {
-    color: #667eea;
+    color: #283593;
     margin-bottom: 0.5rem;
 }
 
@@ -103,11 +104,11 @@ section {
     background: #f8f9ff;
     padding: 1.5rem;
     border-radius: 12px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #283593;
 }
 
 .info-card h3 {
-    color: #667eea;
+    color: #283593;
     margin-bottom: 1rem;
 }
 
@@ -143,13 +144,13 @@ section {
 }
 
 .term-card:hover {
-    border-color: #667eea;
+    border-color: #283593;
     transform: translateY(-4px);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
 }
 
 .term-card h4 {
-    color: #667eea;
+    color: #283593;
     margin-bottom: 0.5rem;
 }
 
@@ -184,7 +185,7 @@ section {
 }
 
 .select-term-btn {
-    background: #667eea;
+    background: #283593;
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -195,7 +196,7 @@ section {
 }
 
 .select-term-btn:hover {
-    background: #5a67d8;
+    background: #1a237e;
     transform: translateY(-2px);
 }
 
@@ -231,7 +232,7 @@ section {
 }
 
 .filters input[type="checkbox"] {
-    accent-color: #667eea;
+    accent-color: #283593;
 }
 
 .recommendations-container {
@@ -263,7 +264,7 @@ section {
 }
 
 .course-card:hover {
-    border-color: #667eea;
+    border-color: #283593;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
 }
 
@@ -281,12 +282,12 @@ section {
 }
 
 .course-header h4 {
-    color: #667eea;
+    color: #283593;
     margin: 0;
 }
 
 .priority-score {
-    background: #667eea;
+    background: #283593;
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
@@ -371,12 +372,12 @@ section {
     background: #f0f7ff;
     padding: 1.5rem;
     border-radius: 12px;
-    border: 2px solid #667eea;
+    border: 2px solid #283593;
     height: fit-content;
 }
 
 .selected-courses h3 {
-    color: #667eea;
+    color: #283593;
     margin-bottom: 1rem;
     text-align: center;
 }
@@ -407,7 +408,7 @@ section {
 }
 
 .course-info strong {
-    color: #667eea;
+    color: #283593;
 }
 
 .course-info .credits {
@@ -612,12 +613,12 @@ section {
 
 /* Instruction highlight styling */
 .instruction-highlight {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     color: white;
     padding: 15px;
     border-radius: 10px;
     margin: 15px 0;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(40, 53, 147, 0.3);
     animation: pulse 2s infinite;
 }
 

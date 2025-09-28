@@ -509,3 +509,15 @@ function hideNotification() {
 document.addEventListener('DOMContentLoaded', () => {
     new CoursePlanning();
 });
+
+// Global function for navigation
+function goToStudentOptions() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('studentId');
+    
+    if (studentId) {
+        window.location.href = `/student-options?studentId=${encodeURIComponent(studentId)}`;
+    } else {
+        window.location.href = '/student-options';
+    }
+}

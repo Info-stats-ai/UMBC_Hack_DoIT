@@ -229,11 +229,20 @@ function clearResults() {
     }
 }
 
+function goToStudyGroups() {
+    // Navigate to study groups page with student ID
+    if (currentStudentId) {
+        window.location.href = `/study-groups?studentId=${encodeURIComponent(currentStudentId)}`;
+    } else {
+        alert('Student ID not found. Please return to the home page.');
+    }
+}
+
 function goToMentorship() {
     // Store student ID in session storage for persistence
     if (currentStudentId) {
         sessionStorage.setItem('studentId', currentStudentId);
-        window.location.href = `/mentorship?student_id=${currentStudentId}`;
+        window.location.href = `/mentorship?studentId=${currentStudentId}`;
     } else {
         window.location.href = '/mentorship';
     }
