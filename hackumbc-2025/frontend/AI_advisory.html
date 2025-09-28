@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Academic Advisor - UMBC</title>
+    <link rel="stylesheet" href="/AI_advisory.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>AI Academic Advisor</h1>
+                </div>
+                <div class="student-info" id="studentInfo" style="display: none;">
+                    <span class="student-id">Student: <strong id="currentStudentId"></strong></span>
+                    <button id="changeStudentBtn" class="btn-secondary">Change Student</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Student Login Section -->
+        <div class="login-section" id="loginSection">
+            <div class="login-card">
+                <h2>Welcome to AI Academic Advisor</h2>
+                <p>Get personalized course recommendations and academic guidance</p>
+                <div class="form-group">
+                    <label for="studentIdInput">Enter your Student ID:</label>
+                    <input type="text" id="studentIdInput" placeholder="e.g., AB06686" maxlength="10">
+                    <button id="loginBtn" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Start Chat
+                    </button>
+                </div>
+                <div class="sample-ids">
+                    <p>Try with any Student ID:</p>
+                    <div class="sample-buttons">
+                        <button class="sample-btn" data-id="AB06686">AB06686</button>
+                        <button class="sample-btn" data-id="AD67825">AD67825</button>
+                        <button class="sample-btn" data-id="AE34284">AE34284</button>
+                        <button class="sample-btn" data-id="TEST123">TEST123</button>
+                    </div>
+                    <p class="note">💡 Any student ID will work - we'll create a profile for you!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="chat-container" id="chatContainer" style="display: none;">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-title">
+                    <i class="fas fa-robot"></i>
+                    <h3>AI Advisor</h3>
+                </div>
+                <div class="chat-controls">
+                    <button id="clearChatBtn" class="btn-icon" title="Clear Chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            Hello! I'm your AI Academic Advisor powered by advanced AI. I can help you with:
+                            <br><br>
+                            🎓 <strong>Course Planning</strong><br>
+                            • Personalized course recommendations<br>
+                            • Prerequisite analysis<br>
+                            • Faculty and teaching style information<br><br>
+                            
+                            📈 <strong>Academic Guidance</strong><br>
+                            • Degree progress tracking<br>
+                            • Study strategies<br>
+                            • Career pathway advice<br><br>
+                            
+                            <strong>Ask me anything about your academic journey!</strong> I'll provide personalized, intelligent responses based on your specific situation.
+                        </div>
+                        <div class="message-time" id="welcomeTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-btn" data-question="Help me plan my courses for next semester">
+                    <i class="fas fa-book"></i> Course Planning
+                </button>
+                <button class="quick-btn" data-question="What prerequisites do I need to complete?">
+                    <i class="fas fa-list-check"></i> Prerequisites
+                </button>
+                <button class="quick-btn" data-question="How am I doing in my degree program?">
+                    <i class="fas fa-chart-line"></i> Academic Progress
+                </button>
+                <button class="quick-btn" data-question="Tell me about available professors and their teaching styles">
+                    <i class="fas fa-chalkboard-teacher"></i> Faculty Information
+                </button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Ask me about courses, prerequisites, or academic planning..." maxlength="500">
+                    <button id="sendBtn" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span>AI Advisor is typing...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading your academic profile...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" id="errorModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Error</h3>
+                <button class="modal-close" id="closeErrorModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="errorModalOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/AI_advisory.js"></script>
+</body>
+</html>

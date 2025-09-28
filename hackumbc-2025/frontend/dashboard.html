@@ -3,373 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMBC Student Advisor Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>UMBC Academic Analytics Dashboard</title>
     <link rel="stylesheet" href="dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Navigation -->
-        <nav class="dashboard-nav">
-            <div class="nav-brand">
-                <h1>🎓 UMBC Advisor Dashboard</h1>
-            </div>
-            <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="overview">Overview</button>
-                <button class="nav-tab" data-tab="risk-analysis">At-Risk Students</button>
-                <button class="nav-tab" data-tab="course-paths">Course Paths</button>
-                <button class="nav-tab" onclick="window.location.href='/study-groups'">Study Groups</button>
-                <button class="nav-tab" data-tab="predictions">Predictions</button>
-            </div>
-        </nav>
-
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="dashboard-header">
-                <h2>📊 Academic Overview</h2>
-                <div class="date-range">
-                    <select id="semesterSelect">
-                        <option value="current">Current Semester</option>
-                        <option value="fall2024">Fall 2024</option>
-                        <option value="spring2024">Spring 2024</option>
-                    </select>
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>UMBC Academic Analytics</h1>
                 </div>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-icon">👥</div>
-                    <div class="metric-content">
-                        <h3>Total Students</h3>
-                        <div class="metric-value" id="totalStudents">-</div>
-                        <div class="metric-change positive">+12% from last semester</div>
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" id="studentSearch" placeholder="Search students by ID..." />
+                        <i class="fas fa-search"></i>
                     </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">⚠️</div>
-                    <div class="metric-content">
-                        <h3>At-Risk Students</h3>
-                        <div class="metric-value" id="atRiskStudents">-</div>
-                        <div class="metric-change negative">+3% from last semester</div>
+                    <div class="refresh-btn" id="refreshData">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
                     </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">📈</div>
-                    <div class="metric-content">
-                        <h3>Success Rate</h3>
-                        <div class="metric-value" id="successRate">-</div>
-                        <div class="metric-change positive">+5% from last semester</div>
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-icon">🎯</div>
-                    <div class="metric-content">
-                        <h3>Avg GPA</h3>
-                        <div class="metric-value" id="avgGPA">-</div>
-                        <div class="metric-change positive">+0.2 from last semester</div>
+                    <div class="last-updated" id="lastUpdated">
+                        Last updated: <span id="lastUpdateTime">--</span>
                     </div>
                 </div>
             </div>
+        </header>
 
-            <div class="charts-grid">
-                <div class="chart-container">
-                    <h3>Grade Distribution</h3>
-                    <canvas id="gradeChart"></canvas>
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Overview Cards -->
+            <section class="overview-section">
+                <div class="overview-cards">
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Total Students</h3>
+                            <div class="metric-value" id="totalStudents">--</div>
+                            <div class="metric-change positive" id="studentChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Active Courses</h3>
+                            <div class="metric-value" id="totalCourses">--</div>
+                            <div class="metric-change positive" id="courseChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Success Rate</h3>
+                            <div class="metric-value" id="successRate">--%</div>
+                            <div class="metric-change positive" id="successChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>At-Risk Students</h3>
+                            <div class="metric-value" id="atRiskCount">--</div>
+                            <div class="metric-change negative" id="riskChange">+0%</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <h3>Department Performance</h3>
-                    <canvas id="departmentChart"></canvas>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="charts-grid">
+                    <!-- Student Performance Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Student Performance Distribution</h3>
+                            <div class="chart-controls">
+                                <select id="performanceFilter">
+                                    <option value="gpa">GPA Distribution</option>
+                                    <option value="risk">Risk Level</option>
+                                    <option value="year">By Academic Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Course Success Rates -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Course Success Rates</h3>
+                            <div class="chart-controls">
+                                <select id="courseFilter">
+                                    <option value="all">All Courses</option>
+                                    <option value="csee">Computer Science</option>
+                                    <option value="math">Mathematics</option>
+                                    <option value="biol">Biology</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="courseSuccessChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Learning Style Distribution -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Learning Style Distribution</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="learningStyleChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors Analysis -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Risk Factors Analysis</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="riskFactorsChart"></canvas>
+                        </div>
+                    </div>
                 </div>
+            </section>
+
+            <!-- Student Details Section -->
+            <section class="student-details-section">
+                <div class="card student-details-card">
+                    <div class="card-header">
+                        <h3>Student Analysis</h3>
+                        <div class="student-controls">
+                            <input type="text" id="studentIdInput" placeholder="Enter Student ID" />
+                            <button id="analyzeStudentBtn">Analyze Student</button>
+                        </div>
+                    </div>
+                    <div class="card-content" id="studentDetailsContent">
+                        <div class="no-student-selected">
+                            <i class="fas fa-user-graduate"></i>
+                            <p>Enter a student ID to view detailed analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-time Updates Section -->
+            <section class="realtime-section">
+                <div class="card realtime-card">
+                    <div class="card-header">
+                        <h3>Real-time Updates</h3>
+                        <div class="realtime-indicator">
+                            <div class="pulse-dot"></div>
+                            <span>Live</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="updates-list" id="updatesList">
+                            <div class="update-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Dashboard initialized. Waiting for data...</span>
+                                <span class="update-time">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Study Groups Section -->
+            <section class="study-groups-section">
+                <div class="card study-groups-card">
+                    <div class="card-header">
+                        <h3>Study Group Recommendations</h3>
+                        <div class="group-controls">
+                            <select id="courseSelect">
+                                <option value="">Select a course...</option>
+                            </select>
+                            <button id="generateGroupsBtn">Generate Groups</button>
+                        </div>
+                    </div>
+                    <div class="card-content" id="studyGroupsContent">
+                        <div class="no-groups-selected">
+                            <i class="fas fa-users"></i>
+                            <p>Select a course to generate study group recommendations</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading data...</p>
             </div>
         </div>
 
-        <!-- At-Risk Students Tab -->
-        <div id="risk-analysis" class="tab-content">
-            <div class="dashboard-header">
-                <h2>⚠️ At-Risk Student Analysis</h2>
-                <div class="risk-filters">
-                    <select id="riskLevelFilter">
-                        <option value="all">All Risk Levels</option>
-                        <option value="high">High Risk</option>
-                        <option value="medium">Medium Risk</option>
-                        <option value="low">Low Risk</option>
-                    </select>
-                    <select id="departmentFilter">
-                        <option value="all">All Departments</option>
-                        <option value="CSEE">Computer Science</option>
-                        <option value="MATH">Mathematics</option>
-                        <option value="BIOL">Biology</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="risk-summary">
-                <div class="risk-card high-risk">
-                    <h4>High Risk (Immediate Action)</h4>
-                    <div class="risk-count" id="highRiskCount">0</div>
-                    <div class="risk-description">Students with multiple failing grades</div>
-                </div>
-                <div class="risk-card medium-risk">
-                    <h4>Medium Risk (Monitor Closely)</h4>
-                    <div class="risk-count" id="mediumRiskCount">0</div>
-                    <div class="risk-description">Students showing early warning signs</div>
-                </div>
-                <div class="risk-card low-risk">
-                    <h4>Low Risk (Preventive Care)</h4>
-                    <div class="risk-count" id="lowRiskCount">0</div>
-                    <div class="risk-description">Students who may benefit from support</div>
-                </div>
-            </div>
-
-            <div class="students-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Major</th>
-                            <th>Risk Level</th>
-                            <th>Current GPA</th>
-                            <th>Risk Factors</th>
-                            <th>Recommended Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="riskStudentsTable">
-                        <!-- Populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Course Paths Tab -->
-        <div id="course-paths" class="tab-content">
-            <div class="dashboard-header">
-                <h2>🗺️ Optimal Course Path Visualization</h2>
-                <div class="path-controls">
-                    <select id="majorSelect">
-                        <option value="computer-science">Computer Science</option>
-                        <option value="mathematics">Mathematics</option>
-                        <option value="biology">Biology</option>
-                        <option value="engineering">Engineering</option>
-                    </select>
-                    <button id="generatePathBtn">Generate Optimal Path</button>
-                </div>
-            </div>
-
-            <div class="path-visualization">
-                <div class="path-info">
-                    <h3>Recommended Course Sequence</h3>
-                    <div class="path-metrics">
-                        <div class="path-metric">
-                            <span class="metric-label">Total Credits:</span>
-                            <span class="metric-value" id="totalCredits">120</span>
-                        </div>
-                        <div class="path-metric">
-                            <span class="metric-label">Estimated Duration:</span>
-                            <span class="metric-value" id="estimatedDuration">4 years</span>
-                        </div>
-                        <div class="path-metric">
-                            <span class="metric-label">Success Probability:</span>
-                            <span class="metric-value" id="successProbability">87%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="path-diagram" id="coursePathDiagram">
-                    <!-- D3.js visualization will be rendered here -->
-                </div>
-            </div>
-
-            <div class="alternative-paths">
-                <h3>Alternative Pathways</h3>
-                <div class="path-cards">
-                    <div class="path-card">
-                        <h4>Accelerated Path</h4>
-                        <p>Complete degree in 3 years with summer courses</p>
-                        <div class="path-pros-cons">
-                            <div class="pros">✓ Faster completion</div>
-                            <div class="cons">⚠ Higher workload</div>
-                        </div>
-                        <button class="path-btn">View Details</button>
-                    </div>
-                    <div class="path-card">
-                        <h4>Research Focus</h4>
-                        <p>Include undergraduate research opportunities</p>
-                        <div class="path-pros-cons">
-                            <div class="pros">✓ Research experience</div>
-                            <div class="cons">⚠ Longer timeline</div>
-                        </div>
-                        <button class="path-btn">View Details</button>
-                    </div>
-                    <div class="path-card">
-                        <h4>Internship Track</h4>
-                        <p>Integrate industry experience throughout</p>
-                        <div class="path-pros-cons">
-                            <div class="pros">✓ Industry connections</div>
-                            <div class="cons">⚠ Scheduling complexity</div>
-                        </div>
-                        <button class="path-btn">View Details</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Study Groups Tab -->
-        <div id="study-groups" class="tab-content">
-            <div class="dashboard-header">
-                <h2>👥 Study Group Recommendations</h2>
-                <div class="group-controls">
-                    <select id="courseGroupSelect">
-                        <option value="all">All Courses</option>
-                        <option value="CSEE-200">CSEE 200</option>
-                        <option value="MATH-151">MATH 151</option>
-                        <option value="BIOL-141">BIOL 141</option>
-                    </select>
-                    <button id="generateGroupsBtn">Generate Study Groups</button>
-                </div>
-            </div>
-
-            <div class="learning-styles">
-                <h3>Learning Style Analysis</h3>
-                <div class="style-distribution">
-                    <div class="style-card">
-                        <h4>Visual Learners</h4>
-                        <div class="style-percentage">35%</div>
-                        <div class="style-description">Prefer diagrams, charts, and visual aids</div>
-                    </div>
-                    <div class="style-card">
-                        <h4>Auditory Learners</h4>
-                        <div class="style-percentage">25%</div>
-                        <div class="style-description">Learn best through discussion and lectures</div>
-                    </div>
-                    <div class="style-card">
-                        <h4>Kinesthetic Learners</h4>
-                        <div class="style-percentage">30%</div>
-                        <div class="style-description">Learn through hands-on activities</div>
-                    </div>
-                    <div class="style-card">
-                        <h4>Reading/Writing</h4>
-                        <div class="style-percentage">10%</div>
-                        <div class="style-description">Prefer text-based learning materials</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="study-groups-grid">
-                <div class="study-group-card">
-                    <h4>Group Alpha - CSEE 200</h4>
-                    <div class="group-members">
-                        <div class="member">Student A (Visual)</div>
-                        <div class="member">Student B (Auditory)</div>
-                        <div class="member">Student C (Kinesthetic)</div>
-                    </div>
-                    <div class="group-metrics">
-                        <div class="metric">Compatibility: 92%</div>
-                        <div class="metric">Avg GPA: 3.2</div>
-                        <div class="metric">Meeting Time: Tue/Thu 2-4 PM</div>
-                    </div>
-                    <div class="group-actions">
-                        <button class="action-btn primary">Schedule Meeting</button>
-                        <button class="action-btn secondary">View Details</button>
-                    </div>
-                </div>
-
-                <div class="study-group-card">
-                    <h4>Group Beta - MATH 151</h4>
-                    <div class="group-members">
-                        <div class="member">Student D (Visual)</div>
-                        <div class="member">Student E (Reading)</div>
-                        <div class="member">Student F (Kinesthetic)</div>
-                    </div>
-                    <div class="group-metrics">
-                        <div class="metric">Compatibility: 88%</div>
-                        <div class="metric">Avg GPA: 3.4</div>
-                        <div class="metric">Meeting Time: Mon/Wed 3-5 PM</div>
-                    </div>
-                    <div class="group-actions">
-                        <button class="action-btn primary">Schedule Meeting</button>
-                        <button class="action-btn secondary">View Details</button>
-                    </div>
-                </div>
-
-                <div class="study-group-card">
-                    <h4>Group Gamma - BIOL 141</h4>
-                    <div class="group-members">
-                        <div class="member">Student G (Auditory)</div>
-                        <div class="member">Student H (Visual)</div>
-                        <div class="member">Student I (Reading)</div>
-                    </div>
-                    <div class="group-metrics">
-                        <div class="metric">Compatibility: 85%</div>
-                        <div class="metric">Avg GPA: 3.1</div>
-                        <div class="metric">Meeting Time: Fri 1-3 PM</div>
-                    </div>
-                    <div class="group-actions">
-                        <button class="action-btn primary">Schedule Meeting</button>
-                        <button class="action-btn secondary">View Details</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Predictions Tab -->
-        <div id="predictions" class="tab-content">
-            <div class="dashboard-header">
-                <h2>🔮 AI Predictions & Insights</h2>
-                <div class="prediction-controls">
-                    <button id="refreshPredictionsBtn">Refresh Predictions</button>
-                    <button id="exportPredictionsBtn">Export Data</button>
-                </div>
-            </div>
-
-            <div class="prediction-insights">
-                <div class="insight-card">
-                    <h4>🎯 Early Warning Signals</h4>
-                    <div class="insight-content">
-                        <p>15 students show early signs of academic struggle. Recommended immediate intervention.</p>
-                        <div class="insight-actions">
-                            <button class="insight-btn">View Students</button>
-                            <button class="insight-btn">Send Alerts</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="insight-card">
-                    <h4>📈 Success Predictors</h4>
-                    <div class="insight-content">
-                        <p>Students with strong prerequisite completion show 89% success rate in advanced courses.</p>
-                        <div class="insight-actions">
-                            <button class="insight-btn">View Analysis</button>
-                            <button class="insight-btn">Update Prerequisites</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="insight-card">
-                    <h4>🔄 Course Sequencing</h4>
-                    <div class="insight-content">
-                        <p>Alternative course sequences identified that could improve success rates by 12%.</p>
-                        <div class="insight-actions">
-                            <button class="insight-btn">View Sequences</button>
-                            <button class="insight-btn">Recommend Changes</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="prediction-charts">
-                <div class="chart-container">
-                    <h3>Success Probability by Course</h3>
-                    <canvas id="successProbabilityChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>Risk Factor Analysis</h3>
-                    <canvas id="riskFactorChart"></canvas>
-                </div>
+        <!-- Error Modal -->
+        <div class="error-modal" id="errorModal">
+            <div class="error-content">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error</h3>
+                <p id="errorMessage">An error occurred while loading data.</p>
+                <button id="closeErrorBtn">Close</button>
             </div>
         </div>
     </div>

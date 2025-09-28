@@ -8,3 +8,4 @@ joblib
 neo4j
 python-multipart
 pydantic
+google-generativeai
