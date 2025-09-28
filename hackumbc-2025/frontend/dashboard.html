@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMBC Academic Analytics Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>UMBC Academic Analytics</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" id="studentSearch" placeholder="Search students by ID..." />
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="refresh-btn" id="refreshData">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </div>
+                    <div class="last-updated" id="lastUpdated">
+                        Last updated: <span id="lastUpdateTime">--</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Overview Cards -->
+            <section class="overview-section">
+                <div class="overview-cards">
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Total Students</h3>
+                            <div class="metric-value" id="totalStudents">--</div>
+                            <div class="metric-change positive" id="studentChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Active Courses</h3>
+                            <div class="metric-value" id="totalCourses">--</div>
+                            <div class="metric-change positive" id="courseChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Success Rate</h3>
+                            <div class="metric-value" id="successRate">--%</div>
+                            <div class="metric-change positive" id="successChange">+0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card overview-card">
+                        <div class="card-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>At-Risk Students</h3>
+                            <div class="metric-value" id="atRiskCount">--</div>
+                            <div class="metric-change negative" id="riskChange">+0%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="charts-grid">
+                    <!-- Student Performance Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Student Performance Distribution</h3>
+                            <div class="chart-controls">
+                                <select id="performanceFilter">
+                                    <option value="gpa">GPA Distribution</option>
+                                    <option value="risk">Risk Level</option>
+                                    <option value="year">By Academic Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Course Success Rates -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Course Success Rates</h3>
+                            <div class="chart-controls">
+                                <select id="courseFilter">
+                                    <option value="all">All Courses</option>
+                                    <option value="csee">Computer Science</option>
+                                    <option value="math">Mathematics</option>
+                                    <option value="biol">Biology</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="courseSuccessChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Learning Style Distribution -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Learning Style Distribution</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="learningStyleChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors Analysis -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h3>Risk Factors Analysis</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="riskFactorsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Student Details Section -->
+            <section class="student-details-section">
+                <div class="card student-details-card">
+                    <div class="card-header">
+                        <h3>Student Analysis</h3>
+                        <div class="student-controls">
+                            <input type="text" id="studentIdInput" placeholder="Enter Student ID" />
+                            <button id="analyzeStudentBtn">Analyze Student</button>
+                        </div>
+                    </div>
+                    <div class="card-content" id="studentDetailsContent">
+                        <div class="no-student-selected">
+                            <i class="fas fa-user-graduate"></i>
+                            <p>Enter a student ID to view detailed analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-time Updates Section -->
+            <section class="realtime-section">
+                <div class="card realtime-card">
+                    <div class="card-header">
+                        <h3>Real-time Updates</h3>
+                        <div class="realtime-indicator">
+                            <div class="pulse-dot"></div>
+                            <span>Live</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="updates-list" id="updatesList">
+                            <div class="update-item">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Dashboard initialized. Waiting for data...</span>
+                                <span class="update-time">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Study Groups Section -->
+            <section class="study-groups-section">
+                <div class="card study-groups-card">
+                    <div class="card-header">
+                        <h3>Study Group Recommendations</h3>
+                        <div class="group-controls">
+                            <select id="courseSelect">
+                                <option value="">Select a course...</option>
+                            </select>
+                            <button id="generateGroupsBtn">Generate Groups</button>
+                        </div>
+                    </div>
+                    <div class="card-content" id="studyGroupsContent">
+                        <div class="no-groups-selected">
+                            <i class="fas fa-users"></i>
+                            <p>Select a course to generate study group recommendations</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading data...</p>
+            </div>
+        </div>
+
+        <!-- Error Modal -->
+        <div class="error-modal" id="errorModal">
+            <div class="error-content">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error</h3>
+                <p id="errorMessage">An error occurred while loading data.</p>
+                <button id="closeErrorBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
