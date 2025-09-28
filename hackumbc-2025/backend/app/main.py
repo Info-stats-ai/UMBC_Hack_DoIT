@@ -10,9 +10,11 @@ from neo4j import GraphDatabase
 import os
 from typing import Dict, Any, List
 import logging
-from study_groups_service import StudyGroupsService
+from .study_groups_service import StudyGroupsService
 import google.generativeai as genai
 import json
+import random
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,19 +36,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health check endpoint - must be first to avoid catch-all route
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Health check endpoint"""
+    return HealthResponse(
+        status="healthy" if model and driver else "degraded",
+        model_loaded=model is not None,
+        neo4j_connected=driver is not None,
+        features_count=len(feature_names) if feature_names else 0
+    )
+
 # Mount static files (frontend)
 frontend_path = os.path.join("..", "frontend")
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
     
-    # Serve CSS and JS files directly from root
-    @app.get("/styles.css")
-    async def get_styles():
-        return FileResponse(os.path.join(frontend_path, "styles.css"))
-    
-    @app.get("/script.js")
-    async def get_script():
-        return FileResponse(os.path.join(frontend_path, "script.js"))
+    # Serve root index.html
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(os.path.join(frontend_path, "index.html"))
     
     @app.get("/dashboard.css")
     async def get_dashboard_styles():
@@ -55,6 +64,15 @@ if os.path.exists(frontend_path):
     @app.get("/dashboard.js")
     async def get_dashboard_script():
         return FileResponse(os.path.join(frontend_path, "dashboard.js"))
+    
+    # Serve HTML files directly (this should be last to avoid catching API routes)
+    @app.get("/{filename}")
+    async def serve_html(filename: str):
+        file_path = os.path.join(frontend_path, filename)
+        if os.path.exists(file_path) and filename.endswith(('.html', '.css', '.js')):
+            return FileResponse(file_path)
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
 
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
@@ -1131,7 +1149,7 @@ def parse_student_question(question: str) -> Dict[str, Any]:
         return {"intent": "general_advice", "entities": []}
 
 def get_student_data(student_id: str) -> Dict[str, Any]:
-    """Get comprehensive student data from Neo4j"""
+    """Get ONLY real student data from Neo4j - NO dynamic generation"""
     if not driver:
         return {}
     
@@ -1144,6 +1162,7 @@ def get_student_data(student_id: str) -> Dict[str, Any]:
             OPTIONAL MATCH (s)-[:PURSUING]->(d:Degree)
             OPTIONAL MATCH (s)-[:ENROLLED_IN]->(enrolled:Course)
             RETURN s.id as student_id,
+                   s.name as name,
                    s.learningStyle as learning_style,
                    s.preferredCourseLoad as preferred_course_load,
                    s.preferredInstructionMode as instruction_mode,
@@ -1162,18 +1181,22 @@ def get_student_data(student_id: str) -> Dict[str, Any]:
             if not student_data:
                 return {}
             
+            # Return ONLY real data from Neo4j - minimal format
             return {
-                "student_id": student_data["student_id"],
-                "learning_style": student_data["learning_style"],
-                "preferred_course_load": student_data["preferred_course_load"],
-                "instruction_mode": student_data["instruction_mode"],
-                "preferred_pace": student_data["preferred_pace"],
-                "enrollment_date": student_data["enrollment_date"],
-                "expected_graduation": student_data["expected_graduation"],
-                "degree": student_data["degree"],
-                "completed_courses": student_data["completed_courses"] or [],
-                "enrolled_courses": student_data["enrolled_courses"] or [],
-                "completed_count": student_data["completed_count"]
+                "id": student_data["student_id"],
+                "name": student_data["name"],
+                "major": student_data["degree"] or "General Studies",
+                "year": "Senior",  # Default year
+                "gpa": 3.0,  # Default GPA
+                "risk": "low",  # Default risk
+                "email": f"{student_data['name'].lower().replace(' ', '.')}@umbc.edu",
+                "lastLogin": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "creditsCompleted": student_data["completed_count"] * 3,
+                "coursesThisSemester": [],  # Empty - no dynamic generation
+                "recommendations": [],  # Empty - no dynamic generation
+                "studyGroups": [],  # Empty - no dynamic generation
+                "achievements": [],  # Empty - no dynamic generation
+                "riskFactors": []  # Empty - no dynamic generation
             }
             
     except Exception as e:

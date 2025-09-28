@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UMBC Student Options</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -41,11 +42,11 @@
                     </div>
 
                     <!-- Academic Advisor Option -->
-                    <div class="option-card">
+                    <div class="option-card" id="academicAdvisorCard">
                         <div class="option-icon">🎯</div>
                         <h3>Academic Advisor</h3>
                         <p>Schedule meetings and get personalized guidance</p>
-                        <button class="option-btn">Coming Soon</button>
+                        <button class="option-btn" onclick="openAcademicAdvisor()">Access AI Advisor</button>
                     </div>
 
                     <!-- Progress Tracking Option -->
@@ -66,6 +67,138 @@
                 </div>
             </div>
 
+            <!-- Risk Prediction Form (Hidden by default) -->
+            <div id="riskPredictionSection" class="risk-prediction-section hidden">
+                <div class="section-header">
+                    <h2>🔮 Academic Risk Prediction</h2>
+                    <button class="back-btn" onclick="closeRiskPrediction()">← Back to Options</button>
+                </div>
+                
+                <div class="prediction-form">
+                    <form id="predictionForm">
+                        <div class="form-group">
+                            <label for="courseId">Course ID:</label>
+                            <input type="text" id="courseId" name="courseId" placeholder="e.g., CSEE 200" required>
+                        </div>
+                        <button type="submit" id="predictBtn">🔮 Predict Risk</button>
+                    </form>
+                </div>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing student data and course patterns...</p>
+                </div>
+
+                <div id="results" class="results hidden">
+                    <h3>Prediction Results</h3>
+                    <div class="result-card">
+                        <div class="risk-level" id="riskLevel"></div>
+                        <div class="confidence-score">
+                            <span class="label">Confidence:</span>
+                            <span class="score" id="confidenceScore"></span>
+                        </div>
+                        <div class="recommendations" id="recommendations"></div>
+                    </div>
+                </div>
+
+                <div id="error" class="error hidden">
+                    <h3>❌ Error</h3>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+
+            <!-- AI Academic Advisor Section (Hidden by default) -->
+            <div id="academicAdvisorSection" class="academic-advisor-section hidden">
+                <div class="section-header">
+                    <h2>🎯 AI Academic Advisor</h2>
+                    <button class="back-btn" onclick="closeAcademicAdvisor()">← Back to Options</button>
+                </div>
+                
+                <!-- Chat Interface -->
+                <div class="chat-container" id="chatContainer">
+                    <!-- Chat Header -->
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <i class="fas fa-robot"></i>
+                            <h3>AI Advisor</h3>
+                        </div>
+                        <div class="chat-controls">
+                            <button id="clearChatBtn" class="btn-icon" title="Clear Chat">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                        <div class="message-text">
+                            Hello! I'm your AI Academic Advisor powered by advanced AI and connected to your UMBC academic data. I can help you with:
+                            <br><br>
+                            🎓 <strong>Course Planning</strong><br>
+                            • Personalized course recommendations based on your academic history<br>
+                            • Prerequisite analysis using your completed courses<br>
+                            • Faculty and teaching style information<br><br>
+                            
+                            📈 <strong>Academic Guidance</strong><br>
+                            • Degree progress tracking with real data<br>
+                            • Study strategies based on your performance<br>
+                            • Career pathway advice<br><br>
+                            
+                            <strong>Ask me anything about your academic journey!</strong> I'll provide personalized, data-driven responses based on your specific academic profile and course history.
+                        </div>
+                                <div class="message-time" id="welcomeTime"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions" id="quickActions">
+                        <button class="quick-btn" data-question="Help me plan my courses for next semester">
+                            📚 Course Planning
+                        </button>
+                        <button class="quick-btn" data-question="What prerequisites do I need to complete?">
+                            ✅ Prerequisites
+                        </button>
+                        <button class="quick-btn" data-question="How am I doing in my degree program?">
+                            📈 Academic Progress
+                        </button>
+                        <button class="quick-btn" data-question="Tell me about available professors and their teaching styles">
+                            👨‍🏫 Faculty Information
+                        </button>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="chat-input-container">
+                        <div class="chat-input">
+                            <input type="text" id="messageInput" placeholder="Ask me about courses, prerequisites, or academic planning..." maxlength="500">
+                            <button id="sendBtn" class="send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span>AI Advisor is typing...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading your academic profile...</p>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer>

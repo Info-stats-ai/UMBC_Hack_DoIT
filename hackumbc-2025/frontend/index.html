@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMBC Academic Risk Predictor</title>
+    <title>UMBC Student Portal</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎓 UMBC Academic Portal</h1>
-            <p>Your gateway to personalized academic tools and AI-powered insights</p>
+            <h1>🎓 UMBC Student Portal</h1>
+            <p>Your personalized academic success platform</p>
         </header>
 
         <main>
@@ -32,14 +32,140 @@
                     </div>
                 </div>
             </div>
-        </main>
-
+        </div>
 
         <footer>
-            <p>&copy; 2025 UMBC Academic Analytics Team</p>
+            <p>&copy; 2024 UMBC Student Portal. Powered by AI and personalized analytics.</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <style>
+        .welcome-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .welcome-section h2 {
+            font-size: 2.5rem;
+            margin: 0 0 20px 0;
+        }
+        
+        .welcome-section p {
+            font-size: 1.2rem;
+            margin: 0 0 30px 0;
+            opacity: 0.9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .primary-btn, .secondary-btn {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 25px 30px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.3s ease;
+            min-width: 300px;
+        }
+        
+        .primary-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .secondary-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .primary-btn:hover, .secondary-btn:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .btn-icon {
+            font-size: 2.5rem;
+        }
+        
+        .btn-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+        }
+        
+        .btn-content p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .features-section {
+            margin: 60px 0;
+        }
+        
+        .features-section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin: 0 0 40px 0;
+            color: #2d3748;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            color: #2d3748;
+            margin: 0 0 15px 0;
+            font-size: 1.3rem;
+        }
+        
+        .feature-card p {
+            color: #718096;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .primary-btn, .secondary-btn {
+                min-width: 250px;
+            }
+        }
+    </style>
 </body>
 </html>
