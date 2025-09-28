@@ -956,7 +956,6 @@ async def get_study_groups_styles():
 async def get_study_groups_script():
     return FileResponse(os.path.join("..", "frontend", "study-groups.js"))
 
-<<<<<<< HEAD
 @app.get("/mentorship")
 async def serve_mentorship():
     """Serve the mentorship page"""
