@@ -56,8 +56,8 @@ if os.path.exists(frontend_path):
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "Iwin@27100"
-NEO4J_DB = "smalldata"
+NEO4J_PASSWORD = "umbctest123"
+NEO4J_DB = "neo4j"
 
 # Load model
 MODEL_PATH = os.path.join("..", "ml", "models", "academic_risk_model_optimized.joblib")
@@ -84,9 +84,28 @@ try:
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
     driver.verify_connectivity()
     logger.info("Connected to Neo4j database")
+    
+    # Check dataset loading
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            total_nodes = session.run("MATCH (n) RETURN count(n) as count").single()["count"]
+            student_count = session.run("MATCH (s:Student) RETURN count(s) as count").single()["count"]
+            course_count = session.run("MATCH (c:Course) RETURN count(c) as count").single()["count"]
+            
+            print(f"📊 DATASET LOADED SUCCESSFULLY!")
+            print(f"   Total Nodes: {total_nodes}")
+            print(f"   Students: {student_count}")
+            print(f"   Courses: {course_count}")
+            logger.info(f"Dataset loaded - Total nodes: {total_nodes}, Students: {student_count}, Courses: {course_count}")
+            
+    except Exception as e:
+        print(f"❌ ERROR CHECKING DATASET: {e}")
+        logger.error(f"Error checking dataset: {e}")
+        
 except Exception as e:
     driver = None
     logger.error(f"Failed to connect to Neo4j: {e}")
+    print(f"❌ NEO4J CONNECTION FAILED: {e}")
 
 # Pydantic models
 class PredictionRequest(BaseModel):
@@ -110,29 +129,30 @@ class HealthResponse(BaseModel):
 
 # Helper functions
 def get_student_course_features(student_id: str, course_id: str) -> pd.DataFrame:
-    """Extract features for a student-course pair from Neo4j"""
-    if not driver:
-        raise HTTPException(status_code=503, detail="Neo4j database not available")
-    
-    query = """
-    MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course {id: $course_id})
-    RETURN s.id AS student_id,
-           c.id AS course_id,
-           s.fastRP_embedding AS s_emb,
-           c.fastRP_embedding AS c_emb,
-           s.louvain_community AS s_comm,
-           c.louvain_community AS c_comm
-    """
-    
-    with driver.session(database=NEO4J_DB) as session:
-        result = session.run(query, {"student_id": student_id, "course_id": course_id})
-        rows = result.data()
-        
-        if not rows:
-            # Try to get features even if no direct COMPLETED relationship
-            fallback_query = """
-            MATCH (s:Student {id: $student_id}), (c:Course {id: $course_id})
-            WHERE s.fastRP_embedding IS NOT NULL AND c.fastRP_embedding IS NOT NULL
+    """Extract features for a student-course pair from CSV data"""
+    # Load features directly from ML data CSV since Neo4j doesn't have embeddings
+    try:
+        csv_path = os.path.join("..", "ml", "data", "ml_data.csv")
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+
+            # Filter for the specific student-course pair
+            filtered_df = df[(df['student_id'] == student_id) & (df['course_id'] == course_id)]
+
+            if filtered_df.empty:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No data found for student {student_id} and course {course_id}"
+                )
+
+            return filtered_df.iloc[:1]  # Return first row as DataFrame
+        else:
+            # Fallback to Neo4j if CSV doesn't exist (original implementation)
+            if not driver:
+                raise HTTPException(status_code=503, detail="Neo4j database not available")
+
+            query = """
+            MATCH (s:Student {id: $student_id})-[:COMPLETED]->(c:Course {id: $course_id})
             RETURN s.id AS student_id,
                    c.id AS course_id,
                    s.fastRP_embedding AS s_emb,
@@ -140,27 +160,50 @@ def get_student_course_features(student_id: str, course_id: str) -> pd.DataFrame
                    s.louvain_community AS s_comm,
                    c.louvain_community AS c_comm
             """
-            result = session.run(fallback_query, {"student_id": student_id, "course_id": course_id})
-            rows = result.data()
-        
-        if not rows:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"No data found for student {student_id} and course {course_id}"
-            )
-    
-    df = pd.DataFrame(rows)
-    
-    # Expand embeddings into columns
-    if 's_emb' in df.columns and df['s_emb'].iloc[0] is not None:
-        s_emb_df = pd.DataFrame(df['s_emb'].tolist()).add_prefix('s_emb_')
-        df = pd.concat([df, s_emb_df], axis=1)
-    
-    if 'c_emb' in df.columns and df['c_emb'].iloc[0] is not None:
-        c_emb_df = pd.DataFrame(df['c_emb'].tolist()).add_prefix('c_emb_')
-        df = pd.concat([df, c_emb_df], axis=1)
-    
-    return df
+
+            with driver.session(database=NEO4J_DB) as session:
+                result = session.run(query, {"student_id": student_id, "course_id": course_id})
+                rows = result.data()
+
+                if not rows:
+                    # Try to get features even if no direct COMPLETED relationship
+                    fallback_query = """
+                    MATCH (s:Student {id: $student_id}), (c:Course {id: $course_id})
+                    WHERE s.fastRP_embedding IS NOT NULL AND c.fastRP_embedding IS NOT NULL
+                    RETURN s.id AS student_id,
+                           c.id AS course_id,
+                           s.fastRP_embedding AS s_emb,
+                           c.fastRP_embedding AS c_emb,
+                           s.louvain_community AS s_comm,
+                           c.louvain_community AS c_comm
+                    """
+                    result = session.run(fallback_query, {"student_id": student_id, "course_id": course_id})
+                    rows = result.data()
+
+                if not rows:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No data found for student {student_id} and course {course_id}"
+                    )
+
+            df = pd.DataFrame(rows)
+
+            # Expand embeddings into columns
+            if 's_emb' in df.columns and df['s_emb'].iloc[0] is not None:
+                s_emb_df = pd.DataFrame(df['s_emb'].tolist()).add_prefix('s_emb_')
+                df = pd.concat([df, s_emb_df], axis=1)
+
+            if 'c_emb' in df.columns and df['c_emb'].iloc[0] is not None:
+                c_emb_df = pd.DataFrame(df['c_emb'].tolist()).add_prefix('c_emb_')
+                df = pd.concat([df, c_emb_df], axis=1)
+
+            return df
+
+    except Exception as e:
+        if "No data found" in str(e):
+            raise
+        logger.error(f"Error loading features: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load features: {str(e)}")
 
 def generate_recommendations(prediction_result: int, confidence: float) -> List[str]:
     """Generate recommendations based on prediction"""
@@ -192,6 +235,26 @@ async def root():
     if os.path.exists(frontend_file):
         return FileResponse(frontend_file)
     return {"message": "UMBC Academic Risk Predictor API", "status": "running", "frontend": "not found"}
+
+@app.get("/student-options")
+async def serve_student_options():
+    """Serve the student options page"""
+    options_file = os.path.join("..", "frontend", "student-options.html")
+    if os.path.exists(options_file):
+        return FileResponse(options_file)
+    return {"message": "Student options page not found"}
+
+@app.get("/student-options.html")
+async def serve_student_options_html():
+    """Serve the student options page with .html extension"""
+    options_file = os.path.join("..", "frontend", "student-options.html")
+    if os.path.exists(options_file):
+        return FileResponse(options_file)
+    return {"message": "Student options page not found"}
+
+@app.get("/student-options.js")
+async def get_student_options_script():
+    return FileResponse(os.path.join("..", "frontend", "student-options.js"))
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():

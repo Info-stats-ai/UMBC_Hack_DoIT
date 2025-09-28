@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMBC Student Options</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 UMBC Academic Portal</h1>
+            <p>Welcome, <span id="studentDisplayId"></span> - Choose your option below</p>
+        </header>
+
+        <main>
+            <div class="options-section">
+                <div class="options-grid">
+                    <!-- Risk Prediction Option -->
+                    <div class="option-card" id="riskPredictionCard">
+                        <div class="option-icon">🔮</div>
+                        <h3>Academic Risk Prediction</h3>
+                        <p>Get AI-powered predictions for your success in specific courses</p>
+                        <button class="option-btn" onclick="openRiskPrediction()">Access Risk Prediction</button>
+                    </div>
+
+                    <!-- Course Planning Option -->
+                    <div class="option-card">
+                        <div class="option-icon">📚</div>
+                        <h3>Course Planning</h3>
+                        <p>Plan your academic journey with optimal course sequences</p>
+                        <button class="option-btn">Coming Soon</button>
+                    </div>
+
+                    <!-- Study Groups Option -->
+                    <div class="option-card">
+                        <div class="option-icon">👥</div>
+                        <h3>Study Groups</h3>
+                        <p>Find compatible study partners for your courses</p>
+                        <button class="option-btn">Coming Soon</button>
+                    </div>
+
+                    <!-- Academic Advisor Option -->
+                    <div class="option-card">
+                        <div class="option-icon">🎯</div>
+                        <h3>Academic Advisor</h3>
+                        <p>Schedule meetings and get personalized guidance</p>
+                        <button class="option-btn">Coming Soon</button>
+                    </div>
+
+                    <!-- Progress Tracking Option -->
+                    <div class="option-card">
+                        <div class="option-icon">📊</div>
+                        <h3>Progress Tracking</h3>
+                        <p>Monitor your academic progress and achievements</p>
+                        <button class="option-btn">Coming Soon</button>
+                    </div>
+
+                    <!-- Resources Option -->
+                    <div class="option-card">
+                        <div class="option-icon">📖</div>
+                        <h3>Academic Resources</h3>
+                        <p>Access textbooks, study materials, and helpful resources</p>
+                        <button class="option-btn">Coming Soon</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Prediction Form (Hidden by default) -->
+            <div id="riskPredictionSection" class="risk-prediction-section hidden">
+                <div class="section-header">
+                    <h2>🔮 Academic Risk Prediction</h2>
+                    <button class="back-btn" onclick="closeRiskPrediction()">← Back to Options</button>
+                </div>
+                
+                <div class="prediction-form">
+                    <form id="predictionForm">
+                        <div class="form-group">
+                            <label for="courseId">Course ID:</label>
+                            <input type="text" id="courseId" name="courseId" placeholder="e.g., CSEE 200" required>
+                        </div>
+                        <button type="submit" id="predictBtn">🔮 Predict Risk</button>
+                    </form>
+                </div>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing student data and course patterns...</p>
+                </div>
+
+                <div id="results" class="results hidden">
+                    <h3>Prediction Results</h3>
+                    <div class="result-card">
+                        <div class="risk-level" id="riskLevel"></div>
+                        <div class="confidence-score">
+                            <span class="label">Confidence:</span>
+                            <span class="score" id="confidenceScore"></span>
+                        </div>
+                        <div class="recommendations" id="recommendations"></div>
+                    </div>
+                </div>
+
+                <div id="error" class="error hidden">
+                    <h3>❌ Error</h3>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 UMBC Academic Analytics Team</p>
+        </footer>
+    </div>
+
+    <script src="student-options.js"></script>
+</body>
+</html>
