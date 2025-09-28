@@ -17,14 +17,42 @@
             <div class="welcome-section">
                 <div class="welcome-form">
                     <h2>Welcome to UMBC Academic Portal</h2>
-                    <p>Enter your Student ID to access your personalized academic tools</p>
-                    <form id="studentLoginForm">
-                        <div class="form-group">
-                            <label for="studentId">Student ID:</label>
-                            <input type="text" id="studentId" name="studentId" placeholder="e.g., AA20434" required>
+                    <p>Choose your academic tool to get started</p>
+                    
+                    <div class="tool-cards">
+                        <div class="tool-card">
+                            <div class="tool-icon">🤖</div>
+                            <h3>AI Academic Advisor</h3>
+                            <p>Get personalized course recommendations and academic guidance through our intelligent chatbot</p>
+                            <a href="/ai-advisory" class="tool-btn">Start Chat</a>
                         </div>
-                        <button type="submit" id="continueBtn">Continue</button>
-                    </form>
+                        
+                        <div class="tool-card">
+                            <div class="tool-icon">📚</div>
+                            <h3>Course Planning</h3>
+                            <p>Plan your semester with intelligent course recommendations and prerequisite checking</p>
+                            <a href="/course-planning" class="tool-btn">Plan Courses</a>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <div class="tool-icon">📊</div>
+                            <h3>Academic Dashboard</h3>
+                            <p>View your academic progress, risk analysis, and performance insights</p>
+                            <a href="/dashboard" class="tool-btn">View Dashboard</a>
+                        </div>
+                    </div>
+                    
+                    <div class="student-login-section">
+                        <h3>Quick Access</h3>
+                        <p>Enter your Student ID for direct access to all tools</p>
+                        <form id="studentLoginForm">
+                            <div class="form-group">
+                                <label for="studentId">Student ID:</label>
+                                <input type="text" id="studentId" name="studentId" placeholder="e.g., AB06686" required>
+                            </div>
+                            <button type="submit" id="continueBtn">Continue</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </main>

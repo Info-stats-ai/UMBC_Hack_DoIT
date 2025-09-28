@@ -46,6 +46,84 @@ main {
     margin-bottom: 30px;
 }
 
+/* Tool Cards */
+.tool-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.tool-card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.tool-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.tool-card h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.tool-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.tool-btn {
+    display: inline-block;
+    background: #667eea;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tool-btn:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Student Login Section */
+.student-login-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 2rem;
+    border: 1px solid #e1e5e9;
+}
+
+.student-login-section h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.student-login-section p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
 /* Dashboard link */
 .dashboard-link {
     text-align: center;

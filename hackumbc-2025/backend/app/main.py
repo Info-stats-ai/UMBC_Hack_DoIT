@@ -11,6 +11,8 @@ import os
 from typing import Dict, Any, List
 import logging
 from study_groups_service import StudyGroupsService
+import google.generativeai as genai
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,25 +62,36 @@ NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "Harsh@0603"  # Default password - change this to your Neo4j password
 NEO4J_DB = "neo4j"
 
-# Load model
-MODEL_PATH = os.path.join("..", "ml", "models", "academic_risk_model_optimized.joblib")
-if os.path.exists(MODEL_PATH):
-    model_data = joblib.load(MODEL_PATH)
-    model = model_data['model']
-    feature_names = model_data['feature_names']
-    logger.info(f"Loaded model with {len(feature_names)} features")
-else:
-    # Fallback to basic model if optimized doesn't exist
-    FALLBACK_MODEL_PATH = os.path.join("..", "ml", "models", "academic_risk_model.joblib")
-    if os.path.exists(FALLBACK_MODEL_PATH):
-        model_data = joblib.load(FALLBACK_MODEL_PATH)
+# Gemini API configuration
+GEMINI_API_KEY = "AIzaSyAjU7Bf4p4GpChsdMgpJfIVSM74TdYrL1U"
+genai.configure(api_key=GEMINI_API_KEY)
+gemini_model = genai.GenerativeModel('gemini-2.0-flash')
+logger.info("Gemini API configured successfully")
+
+# Load model (optional for chatbot functionality)
+model = None
+feature_names = []
+try:
+    MODEL_PATH = os.path.join("..", "ml", "models", "academic_risk_model_optimized.joblib")
+    if os.path.exists(MODEL_PATH):
+        model_data = joblib.load(MODEL_PATH)
         model = model_data['model']
         feature_names = model_data['feature_names']
-        logger.info(f"Loaded fallback model with {len(feature_names)} features")
+        logger.info(f"Loaded model with {len(feature_names)} features")
     else:
-        model = None
-        feature_names = []
-        logger.warning("No model found! Please train the model first.")
+        # Fallback to basic model if optimized doesn't exist
+        FALLBACK_MODEL_PATH = os.path.join("..", "ml", "models", "academic_risk_model.joblib")
+        if os.path.exists(FALLBACK_MODEL_PATH):
+            model_data = joblib.load(FALLBACK_MODEL_PATH)
+            model = model_data['model']
+            feature_names = model_data['feature_names']
+            logger.info(f"Loaded fallback model with {len(feature_names)} features")
+        else:
+            logger.warning("No ML model found. Chatbot will work without ML predictions.")
+except Exception as e:
+    logger.warning(f"Could not load ML model: {e}. Chatbot will work without ML predictions.")
+    model = None
+    feature_names = []
 
 # Neo4j driver
 driver = None
@@ -903,6 +916,17 @@ class CourseRecommendationRequest(BaseModel):
     student_id: str
     term_id: str
 
+class ChatbotRequest(BaseModel):
+    student_id: str
+    question: str
+
+class ChatbotResponse(BaseModel):
+    student_id: str
+    question: str
+    answer: str
+    recommendations: List[Dict[str, Any]]
+    confidence: float
+
 @app.post("/api/course-recommendations")
 async def get_course_recommendations(request: CourseRecommendationRequest):
     """Get course recommendations for a student in a specific term"""
@@ -1086,6 +1110,825 @@ async def get_course_planning_script():
 @app.get("/course-planning.css")
 async def get_course_planning_styles():
     return FileResponse(os.path.join("..", "frontend", "course-planning.css"))
+
+# AI Advisory Chatbot API endpoints
+@app.get("/ai-advisory")
+async def serve_ai_advisory():
+    """Serve the AI advisory chatbot page"""
+    advisory_file = os.path.join("..", "frontend", "AI_advisory.html")
+    if os.path.exists(advisory_file):
+        return FileResponse(advisory_file)
+    return {"message": "AI advisory page not found"}
+
+@app.get("/ai-advisory.html")
+async def serve_ai_advisory_html():
+    """Serve the AI advisory page with .html extension"""
+    advisory_file = os.path.join("..", "frontend", "AI_advisory.html")
+    if os.path.exists(advisory_file):
+        return FileResponse(advisory_file)
+    return {"message": "AI advisory page not found"}
+
+@app.get("/AI_advisory.js")
+async def get_ai_advisory_script():
+    return FileResponse(os.path.join("..", "frontend", "AI_advisory.js"))
+
+@app.get("/AI_advisory.css")
+async def get_ai_advisory_styles():
+    return FileResponse(os.path.join("..", "frontend", "AI_advisory.css"))
+
+def parse_student_question(question: str) -> Dict[str, Any]:
+    """Parse student question and extract intent and entities"""
+    question_lower = question.lower()
+    
+    # Course recommendation patterns
+    if any(word in question_lower for word in ['course', 'class', 'take', 'enroll', 'register']):
+        if any(word in question_lower for word in ['next', 'upcoming', 'fall', 'spring', 'semester']):
+            return {"intent": "course_recommendation", "timeframe": "upcoming", "entities": []}
+        elif any(word in question_lower for word in ['difficult', 'hard', 'easy', 'challenging']):
+            return {"intent": "course_difficulty", "entities": []}
+        elif any(word in question_lower for word in ['professor', 'teacher', 'instructor']):
+            return {"intent": "faculty_recommendation", "entities": []}
+        else:
+            return {"intent": "course_general", "entities": []}
+    
+    # Degree progress patterns
+    elif any(word in question_lower for word in ['graduate', 'graduation', 'credits', 'gpa', 'progress']):
+        return {"intent": "degree_progress", "entities": []}
+    
+    # Prerequisite patterns
+    elif any(word in question_lower for word in ['prerequisite', 'prereq', 'need', 'required']):
+        return {"intent": "prerequisites", "entities": []}
+    
+    # General academic advice
+    else:
+        return {"intent": "general_advice", "entities": []}
+
+def get_student_data(student_id: str) -> Dict[str, Any]:
+    """Get comprehensive student data from Neo4j"""
+    if not driver:
+        return {}
+    
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # Get student's basic info, completed courses, and degree
+            student_query = """
+            MATCH (s:Student {id: $student_id})
+            OPTIONAL MATCH (s)-[:COMPLETED]->(completed:Course)
+            OPTIONAL MATCH (s)-[:PURSUING]->(d:Degree)
+            OPTIONAL MATCH (s)-[:ENROLLED_IN]->(enrolled:Course)
+            RETURN s.id as student_id,
+                   s.learningStyle as learning_style,
+                   s.preferredCourseLoad as preferred_course_load,
+                   s.preferredInstructionMode as instruction_mode,
+                   s.preferredPace as preferred_pace,
+                   s.enrollmentDate as enrollment_date,
+                   s.expectedGraduation as expected_graduation,
+                   d.name as degree,
+                   collect(DISTINCT completed.id) as completed_courses,
+                   collect(DISTINCT enrolled.id) as enrolled_courses,
+                   count(completed) as completed_count
+            """
+            
+            result = session.run(student_query, {"student_id": student_id})
+            student_data = result.single()
+            
+            if not student_data:
+                return {}
+            
+            return {
+                "student_id": student_data["student_id"],
+                "learning_style": student_data["learning_style"],
+                "preferred_course_load": student_data["preferred_course_load"],
+                "instruction_mode": student_data["instruction_mode"],
+                "preferred_pace": student_data["preferred_pace"],
+                "enrollment_date": student_data["enrollment_date"],
+                "expected_graduation": student_data["expected_graduation"],
+                "degree": student_data["degree"],
+                "completed_courses": student_data["completed_courses"] or [],
+                "enrolled_courses": student_data["enrolled_courses"] or [],
+                "completed_count": student_data["completed_count"]
+            }
+            
+    except Exception as e:
+        logger.error(f"Error getting student data: {e}")
+        return {}
+
+def find_similar_students(student_id: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Find students with similar academic profiles using Neo4j similarity"""
+    if not driver:
+        return []
+    
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # Simplified similarity search - find students with same degree and learning style
+            similarity_query = """
+            MATCH (s1:Student {id: $student_id})
+            MATCH (s2:Student)
+            WHERE s1 <> s2
+            OPTIONAL MATCH (s1)-[:PURSUING]->(d1:Degree)
+            OPTIONAL MATCH (s2)-[:PURSUING]->(d2:Degree)
+            OPTIONAL MATCH (s2)-[:COMPLETED]->(c2:Course)
+            
+            WITH s1, s2, 
+                 d1.name as s1_degree,
+                 d2.name as s2_degree,
+                 s1.learningStyle as s1_style,
+                 s2.learningStyle as s2_style,
+                 collect(DISTINCT c2.id) as s2_courses
+            
+            // Calculate basic similarity scores
+            WITH s1, s2, s1_degree, s2_degree, s1_style, s2_style, s2_courses,
+                 CASE WHEN s1_degree = s2_degree THEN 1.0 ELSE 0.0 END as degree_similarity,
+                 CASE WHEN s1_style = s2_style THEN 1.0 ELSE 0.0 END as style_similarity
+            
+            // Calculate overall similarity score
+            WITH s1, s2, 
+                 (degree_similarity * 0.6 + style_similarity * 0.4) as overall_similarity,
+                 s2_courses, s1_degree, s2_degree, s1_style, s2_style
+            
+            WHERE overall_similarity > 0.3  // Find students with some similarity
+            
+            RETURN s2.id as similar_student_id,
+                   s2.learningStyle as similar_learning_style,
+                   s2.preferredCourseLoad as similar_course_load,
+                   s2_courses as similar_completed_courses,
+                   overall_similarity,
+                   s2_degree as similar_degree
+            ORDER BY overall_similarity DESC
+            LIMIT $limit
+            """
+            
+            result = session.run(similarity_query, {"student_id": student_id, "limit": limit})
+            similar_students = []
+            
+            for record in result:
+                similar_students.append({
+                    "student_id": record["similar_student_id"],
+                    "learning_style": record["similar_learning_style"],
+                    "course_load": record["similar_course_load"],
+                    "completed_courses": record["similar_completed_courses"] or [],
+                    "similarity_score": record["overall_similarity"],
+                    "degree": record["similar_degree"]
+                })
+            
+            return similar_students
+            
+    except Exception as e:
+        logger.error(f"Error finding similar students: {e}")
+        return []
+
+def get_courses_from_similar_students(student_id: str, similar_students: List[Dict[str, Any]], limit: int = 5) -> List[Dict[str, Any]]:
+    """Get course recommendations based on what similar students took"""
+    if not driver or not similar_students:
+        return []
+    
+    try:
+        student_data = get_student_data(student_id)
+        completed_courses = student_data.get("completed_courses", [])
+        
+        # Get courses that similar students took but current student hasn't
+        similar_course_ids = []
+        for similar_student in similar_students:
+            similar_course_ids.extend(similar_student.get("completed_courses", []))
+        
+        # Remove duplicates and courses already taken by current student
+        similar_course_ids = list(set(similar_course_ids) - set(completed_courses))
+        
+        if not similar_course_ids:
+            return []
+        
+        with driver.session(database=NEO4J_DB) as session:
+            courses_query = """
+            MATCH (c:Course)
+            WHERE c.id IN $similar_course_ids
+            OPTIONAL MATCH (c)-[:PREREQUISITE_FOR]->(future_course:Course)
+            OPTIONAL MATCH (prereq:Course)-[:PREREQUISITE_FOR]->(c)
+            OPTIONAL MATCH (f:Faculty)-[:TEACHES]->(c)
+            OPTIONAL MATCH (c)-[:REQUIRED_FOR]->(d:Degree)
+            WHERE d.name = $degree_name OR d.name IS NULL
+            RETURN c.id as course_id,
+                   c.name as course_name,
+                   c.credits as credits,
+                   c.difficulty as difficulty,
+                   c.instructionMode as instruction_mode,
+                   c.description as description,
+                   collect(DISTINCT future_course.id) as leads_to,
+                   collect(DISTINCT future_course.name) as leads_to_names,
+                   collect(DISTINCT prereq.id) as prerequisites,
+                   collect(DISTINCT prereq.name) as prerequisite_names,
+                   collect(DISTINCT {
+                       name: f.name,
+                       teachingStyle: f.teachingStyle
+                   }) as faculty_options,
+                   CASE 
+                       WHEN c.id STARTS WITH 'CSEE' AND $degree_name CONTAINS 'Computer Science' THEN 100
+                       WHEN c.id STARTS WITH 'MATH' AND $degree_name CONTAINS 'Computer Science' THEN 90
+                       WHEN c.id STARTS WITH 'ENGL' AND $degree_name CONTAINS 'Computer Science' THEN 80
+                       WHEN c.id STARTS WITH 'PHYS' AND $degree_name CONTAINS 'Computer Science' THEN 70
+                       ELSE 50
+                   END as degree_relevance_score
+            ORDER BY degree_relevance_score DESC, c.id
+            LIMIT $limit
+            """
+            
+            courses_result = session.run(courses_query, {
+                "similar_course_ids": similar_course_ids,
+                "degree_name": student_data.get("degree", ""),
+                "limit": limit
+            })
+            
+            courses = []
+            for record in courses_result:
+                course_id = record["course_id"]
+                prerequisites = record["prerequisites"] or []
+                leads_to = record["leads_to"] or []
+                faculty_options = record["faculty_options"] or []
+                
+                # Check if prerequisites are met
+                missing_prerequisites = [p for p in prerequisites if p not in completed_courses]
+                is_available = len(missing_prerequisites) == 0
+                
+                courses.append({
+                    "course_id": course_id,
+                    "course_name": record["course_name"],
+                    "credits": record["credits"] or 3,
+                    "difficulty": record["difficulty"],
+                    "instruction_mode": record["instruction_mode"],
+                    "description": record["description"],
+                    "is_available": is_available,
+                    "missing_prerequisites": missing_prerequisites,
+                    "missing_prerequisite_names": [record["prerequisite_names"][i] for i, prereq in enumerate(prerequisites) if prereq in missing_prerequisites],
+                    "leads_to": leads_to,
+                    "leads_to_names": record["leads_to_names"],
+                    "leads_to_count": len(leads_to),
+                    "faculty_options": faculty_options,
+                    "faculty_count": len(faculty_options),
+                    "relevance_score": record["degree_relevance_score"],
+                    "recommendation_source": "similar_students"
+                })
+            
+            return courses
+            
+    except Exception as e:
+        logger.error(f"Error getting courses from similar students: {e}")
+        return []
+
+def get_available_courses(student_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Get available courses for a student with similarity-based recommendations"""
+    if not driver:
+        return []
+    
+    try:
+        # First, find similar students
+        similar_students = find_similar_students(student_id, limit=3)
+        
+        # Get courses from similar students
+        similar_courses = get_courses_from_similar_students(student_id, similar_students, limit=3)
+        
+        # Get regular course recommendations
+        student_data = get_student_data(student_id)
+        completed_courses = student_data.get("completed_courses", [])
+        
+        with driver.session(database=NEO4J_DB) as session:
+            # Get all courses with their details
+            courses_query = """
+            MATCH (c:Course)
+            WHERE NOT c.id IN $completed_courses
+            OPTIONAL MATCH (c)-[:PREREQUISITE_FOR]->(future_course:Course)
+            OPTIONAL MATCH (prereq:Course)-[:PREREQUISITE_FOR]->(c)
+            OPTIONAL MATCH (f:Faculty)-[:TEACHES]->(c)
+            OPTIONAL MATCH (c)-[:REQUIRED_FOR]->(d:Degree)
+            WHERE d.name = $degree_name OR d.name IS NULL
+            RETURN c.id as course_id,
+                   c.name as course_name,
+                   c.credits as credits,
+                   c.difficulty as difficulty,
+                   c.instructionMode as instruction_mode,
+                   c.description as description,
+                   collect(DISTINCT future_course.id) as leads_to,
+                   collect(DISTINCT future_course.name) as leads_to_names,
+                   collect(DISTINCT prereq.id) as prerequisites,
+                   collect(DISTINCT prereq.name) as prerequisite_names,
+                   collect(DISTINCT {
+                       name: f.name,
+                       teachingStyle: f.teachingStyle
+                   }) as faculty_options,
+                   CASE 
+                       WHEN c.id STARTS WITH 'CSEE' AND $degree_name CONTAINS 'Computer Science' THEN 100
+                       WHEN c.id STARTS WITH 'MATH' AND $degree_name CONTAINS 'Computer Science' THEN 90
+                       WHEN c.id STARTS WITH 'ENGL' AND $degree_name CONTAINS 'Computer Science' THEN 80
+                       WHEN c.id STARTS WITH 'PHYS' AND $degree_name CONTAINS 'Computer Science' THEN 70
+                       ELSE 50
+                   END as degree_relevance_score
+            ORDER BY degree_relevance_score DESC, c.id
+            LIMIT $limit
+            """
+            
+            courses_result = session.run(courses_query, {
+                "completed_courses": completed_courses,
+                "degree_name": student_data.get("degree", ""),
+                "limit": limit - len(similar_courses)
+            })
+            
+            regular_courses = []
+            for record in courses_result:
+                course_id = record["course_id"]
+                prerequisites = record["prerequisites"] or []
+                leads_to = record["leads_to"] or []
+                faculty_options = record["faculty_options"] or []
+                
+                # Check if prerequisites are met
+                missing_prerequisites = [p for p in prerequisites if p not in completed_courses]
+                is_available = len(missing_prerequisites) == 0
+                
+                regular_courses.append({
+                    "course_id": course_id,
+                    "course_name": record["course_name"],
+                    "credits": record["credits"] or 3,
+                    "difficulty": record["difficulty"],
+                    "instruction_mode": record["instruction_mode"],
+                    "description": record["description"],
+                    "is_available": is_available,
+                    "missing_prerequisites": missing_prerequisites,
+                    "missing_prerequisite_names": [record["prerequisite_names"][i] for i, prereq in enumerate(prerequisites) if prereq in missing_prerequisites],
+                    "leads_to": leads_to,
+                    "leads_to_names": record["leads_to_names"],
+                    "leads_to_count": len(leads_to),
+                    "faculty_options": faculty_options,
+                    "faculty_count": len(faculty_options),
+                    "relevance_score": record["degree_relevance_score"],
+                    "recommendation_source": "degree_relevance"
+                })
+            
+            # Combine similar student recommendations with regular recommendations
+            all_courses = similar_courses + regular_courses
+            
+            # Remove duplicates based on course_id
+            seen_courses = set()
+            unique_courses = []
+            for course in all_courses:
+                if course["course_id"] not in seen_courses:
+                    seen_courses.add(course["course_id"])
+                    unique_courses.append(course)
+            
+            return unique_courses[:limit]
+            
+    except Exception as e:
+        logger.error(f"Error getting available courses: {e}")
+        return []
+
+def generate_course_recommendations(student_id: str, timeframe: str = "upcoming") -> List[Dict[str, Any]]:
+    """Generate course recommendations for a student"""
+    return get_available_courses(student_id, limit=5)
+
+async def generate_gemini_response(question: str, student_data: Dict[str, Any], recommendations: List[Dict[str, Any]], intent: str) -> str:
+    """Generate intelligent response using Gemini API with similarity-based insights"""
+    try:
+        # Get similar students for additional context
+        similar_students = find_similar_students(student_data.get('student_id', ''), limit=3)
+        
+        # Separate recommendations by source
+        similar_courses = [r for r in recommendations if r.get('recommendation_source') == 'similar_students']
+        regular_courses = [r for r in recommendations if r.get('recommendation_source') == 'degree_relevance']
+        
+        # Prepare context for Gemini
+        context = f"""
+You are an AI Academic Advisor for UMBC students. You help students with course planning, academic guidance, and degree progress using advanced similarity analysis.
+
+Student Information:
+- Student ID: {student_data.get('student_id', 'Unknown')}
+- Degree Program: {student_data.get('degree', 'Not specified')}
+- Learning Style: {student_data.get('learning_style', 'Not specified')}
+- Completed Courses: {len(student_data.get('completed_courses', []))} courses
+- Preferred Course Load: {student_data.get('preferred_course_load', 'Not specified')}
+- Instruction Mode Preference: {student_data.get('instruction_mode', 'Not specified')}
+
+Student's Question: "{question}"
+
+Intent: {intent}
+
+Similar Students Analysis:
+{json.dumps(similar_students, indent=2) if similar_students else "No similar students found"}
+
+Course Recommendations from Similar Students (students with similar profiles took these):
+{json.dumps(similar_courses[:3], indent=2) if similar_courses else "No similar student recommendations"}
+
+Regular Course Recommendations (based on degree requirements):
+{json.dumps(regular_courses[:3], indent=2) if regular_courses else "No regular recommendations"}
+
+Instructions:
+1. Provide a helpful, personalized response based on the student's data AND similar students' patterns
+2. Use the similarity analysis to explain WHY certain courses are recommended
+3. Mention that recommendations are based on students with similar academic profiles
+4. Be conversational and encouraging
+5. Include specific course names and details when relevant
+6. Mention prerequisites, difficulty levels, and faculty information
+7. Keep responses concise but informative
+8. Use emojis sparingly and appropriately
+9. If no specific data is available, provide general helpful advice
+10. Be specific to the student's question - don't give generic responses
+11. Use the student's name/ID to make it personal
+12. Highlight courses that similar students found valuable
+13. Explain the reasoning behind recommendations using similarity data
+
+Response format: Be conversational, helpful, and specific to the student's situation. Always use Gemini AI to generate responses that leverage similarity analysis.
+        """
+        
+        response = gemini_model.generate_content(context)
+        return response.text
+        
+    except Exception as e:
+        logger.error(f"Gemini API error: {e}")
+        # Fallback to a more intelligent template response
+        return f"I understand you're asking about '{question}'. Based on your academic profile as {student_data.get('student_id', 'student')}, I'd be happy to help you with course planning and academic guidance. Could you be more specific about what you'd like to know?"
+
+def generate_template_response(intent: str, student_data: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> str:
+    """Fallback template-based response generation"""
+    
+    if intent == "course_recommendation":
+        if not recommendations:
+            return "I don't have enough information to recommend courses for you. Please make sure your student profile is complete."
+        
+        available_courses = [r for r in recommendations if r["is_available"]]
+        blocked_courses = [r for r in recommendations if not r["is_available"]]
+        
+        response = "Based on your academic profile, here are my course recommendations:\n\n"
+        
+        if available_courses:
+            response += "✅ **Available Courses:**\n"
+            for course in available_courses[:3]:
+                response += f"• **{course['course_id']}** - {course['course_name']} ({course['credits']} credits)\n"
+                if course['leads_to_count'] > 0:
+                    response += f"  → Prerequisite for {course['leads_to_count']} advanced courses\n"
+        
+        if blocked_courses:
+            response += "\n⚠️ **Courses requiring prerequisites:**\n"
+            for course in blocked_courses[:2]:
+                response += f"• **{course['course_id']}** - {course['course_name']}\n"
+                response += f"  → Missing: {', '.join(course['missing_prerequisites'])}\n"
+        
+        response += "\n💡 **Tip:** Focus on available courses first, then work on prerequisites for advanced courses."
+        
+    elif intent == "course_difficulty":
+        if not recommendations:
+            return "I need more information about your academic background to assess course difficulty. Please complete your student profile."
+        
+        response = "Here's the difficulty breakdown for recommended courses:\n\n"
+        for course in recommendations[:3]:
+            difficulty = course.get("difficulty", "Unknown")
+            difficulty_emoji = "🟢" if difficulty == "Easy" else "🟡" if difficulty == "Medium" else "🔴"
+            response += f"{difficulty_emoji} **{course['course_id']}** - {difficulty} difficulty\n"
+        
+        response += "\n💡 **Advice:** Start with easier courses to build confidence, then tackle more challenging ones."
+        
+    elif intent == "faculty_recommendation":
+        if not recommendations:
+            return "I don't have faculty information available for your recommended courses."
+        
+        response = "Here are the faculty options for your recommended courses:\n\n"
+        for course in recommendations[:3]:
+            if course.get("faculty_count", 0) > 0:
+                response += f"**{course['course_id']}** - {course['faculty_count']} faculty members available\n"
+            else:
+                response += f"**{course['course_id']}** - Faculty TBA\n"
+        
+        response += "\n💡 **Tip:** Check with the department for specific faculty teaching styles and schedules."
+        
+    elif intent == "degree_progress":
+        response = "Let me check your degree progress...\n\n"
+        response += "📊 **Your Academic Status:**\n"
+        response += f"• Completed courses: {student_data.get('completed_count', 0)} courses\n"
+        response += f"• Degree program: {student_data.get('degree', 'Not specified')}\n"
+        response += f"• Learning style: {student_data.get('learning_style', 'Not specified')}\n\n"
+        response += "💡 **Next Steps:**\n"
+        response += "1. Review your degree requirements\n"
+        response += "2. Plan your remaining semesters\n"
+        response += "3. Meet with your academic advisor\n"
+        
+    elif intent == "prerequisites":
+        if not recommendations:
+            return "I don't have prerequisite information available. Please check the course catalog or speak with an advisor."
+        
+        response = "Here are the prerequisite requirements for your recommended courses:\n\n"
+        for course in recommendations[:3]:
+            if course.get("missing_prerequisites"):
+                response += f"**{course['course_id']}** requires:\n"
+                for prereq in course["missing_prerequisites"]:
+                    response += f"  → {prereq}\n"
+            else:
+                response += f"**{course['course_id']}** - No prerequisites needed ✅\n"
+        
+    else:  # general_advice
+        response = "I'm here to help with your academic planning! I can assist with:\n\n"
+        response += "🎓 **Course Planning**\n"
+        response += "• Course recommendations\n"
+        response += "• Prerequisite checking\n"
+        response += "• Faculty information\n\n"
+        response += "📈 **Academic Progress**\n"
+        response += "• Degree requirements\n"
+        response += "• Graduation timeline\n"
+        response += "• GPA tracking\n\n"
+        response += "💡 **Ask me specific questions like:**\n"
+        response += "• 'What courses should I take next semester?'\n"
+        response += "• 'Is MATH 151 too difficult for me?'\n"
+        response += "• 'Which professor teaches CSEE 200?'"
+    
+    return response
+
+async def generate_gemini_response(question: str, student_data: Dict[str, Any], recommendations: List[Dict[str, Any]], intent: str) -> str:
+    """Generate intelligent response using Gemini API"""
+    try:
+        # Prepare context for Gemini
+        context = f"""
+        You are an AI Academic Advisor for UMBC students. Here's the context:
+
+        Student ID: {student_data.get('student_id', 'Unknown')}
+        Learning Style: {student_data.get('learning_style', 'Not specified')}
+        Preferred Course Load: {student_data.get('preferred_course_load', 'Not specified')}
+        Degree Program: {student_data.get('degree', 'Not specified')}
+        Completed Courses: {student_data.get('completed_courses_count', 0)}
+
+        Student's Question: {question}
+        Detected Intent: {intent}
+
+        Available Course Recommendations:
+        {json.dumps(recommendations, indent=2) if recommendations else "No specific recommendations available"}
+
+        Instructions:
+        1. Provide a helpful, personalized response to the student's question
+        2. Use the course recommendations and student data to give specific advice
+        3. Be conversational and encouraging
+        4. Include relevant course information when applicable
+        5. Suggest next steps or follow-up questions
+        6. Use emojis appropriately to make it engaging
+        7. Keep responses concise but informative (2-3 paragraphs max)
+        8. If no specific data is available, provide general helpful advice
+
+        Respond as a friendly academic advisor would.
+        """
+
+        response = gemini_model.generate_content(context)
+        return response.text
+        
+    except Exception as e:
+        logger.error(f"Gemini API error: {e}")
+        # Fallback to template-based response
+        return generate_template_response(intent, student_data, recommendations)
+
+def generate_template_response(intent: str, student_data: Dict[str, Any], recommendations: List[Dict[str, Any]]) -> str:
+    """Fallback template-based response generation"""
+    
+    if intent == "course_recommendation":
+        if not recommendations:
+            return "I don't have enough information to recommend courses for you. Please make sure your student profile is complete."
+        
+        available_courses = [r for r in recommendations if r["is_available"]]
+        blocked_courses = [r for r in recommendations if not r["is_available"]]
+        
+        response = "Based on your academic profile, here are my course recommendations:\n\n"
+        
+        if available_courses:
+            response += "✅ **Available Courses:**\n"
+            for course in available_courses[:3]:
+                response += f"• **{course['course_id']}** - {course['course_name']} ({course['credits']} credits)\n"
+                if course['leads_to_count'] > 0:
+                    response += f"  → Prerequisite for {course['leads_to_count']} advanced courses\n"
+        
+        if blocked_courses:
+            response += "\n⚠️ **Courses requiring prerequisites:**\n"
+            for course in blocked_courses[:2]:
+                response += f"• **{course['course_id']}** - {course['course_name']}\n"
+                response += f"  → Missing: {', '.join(course['missing_prerequisites'])}\n"
+        
+        response += "\n💡 **Tip:** Focus on available courses first, then work on prerequisites for advanced courses."
+        
+    elif intent == "course_difficulty":
+        if not recommendations:
+            return "I need more information about your academic background to assess course difficulty. Please complete your student profile."
+        
+        response = "Here's the difficulty breakdown for recommended courses:\n\n"
+        for course in recommendations[:3]:
+            difficulty = course.get("difficulty", "Unknown")
+            difficulty_emoji = "🟢" if difficulty == "Easy" else "🟡" if difficulty == "Medium" else "🔴"
+            response += f"{difficulty_emoji} **{course['course_id']}** - {difficulty} difficulty\n"
+        
+        response += "\n💡 **Advice:** Start with easier courses to build confidence, then tackle more challenging ones."
+        
+    elif intent == "faculty_recommendation":
+        if not recommendations:
+            return "I don't have faculty information available for your recommended courses."
+        
+        response = "Here are the faculty options for your recommended courses:\n\n"
+        for course in recommendations[:3]:
+            if course.get("faculty_count", 0) > 0:
+                response += f"**{course['course_id']}** - {course['faculty_count']} faculty members available\n"
+            else:
+                response += f"**{course['course_id']}** - Faculty TBA\n"
+        
+        response += "\n💡 **Tip:** Check with the department for specific faculty teaching styles and schedules."
+        
+    elif intent == "degree_progress":
+        response = "Let me check your degree progress...\n\n"
+        response += "📊 **Your Academic Status:**\n"
+        response += "• Completed courses: Check your transcript\n"
+        response += "• Current GPA: Available in student portal\n"
+        response += "• Credits remaining: Varies by degree program\n\n"
+        response += "💡 **Next Steps:**\n"
+        response += "1. Review your degree requirements\n"
+        response += "2. Plan your remaining semesters\n"
+        response += "3. Meet with your academic advisor\n"
+        
+    elif intent == "prerequisites":
+        if not recommendations:
+            return "I don't have prerequisite information available. Please check the course catalog or speak with an advisor."
+        
+        response = "Here are the prerequisite requirements for your recommended courses:\n\n"
+        for course in recommendations[:3]:
+            if course.get("missing_prerequisites"):
+                response += f"**{course['course_id']}** requires:\n"
+                for prereq in course["missing_prerequisites"]:
+                    response += f"  → {prereq}\n"
+            else:
+                response += f"**{course['course_id']}** - No prerequisites needed ✅\n"
+        
+    else:  # general_advice
+        response = "I'm here to help with your academic planning! I can assist with:\n\n"
+        response += "🎓 **Course Planning**\n"
+        response += "• Course recommendations\n"
+        response += "• Prerequisite checking\n"
+        response += "• Faculty information\n\n"
+        response += "📈 **Academic Progress**\n"
+        response += "• Degree requirements\n"
+        response += "• Graduation timeline\n"
+        response += "• GPA tracking\n\n"
+        response += "💡 **Ask me specific questions like:**\n"
+        response += "• 'What courses should I take next semester?'\n"
+        response += "• 'Is MATH 151 too difficult for me?'\n"
+        response += "• 'Which professor teaches CSEE 200?'"
+    
+    return response
+
+@app.post("/api/chatbot/ask", response_model=ChatbotResponse)
+async def ask_chatbot(request: ChatbotRequest):
+    """Main chatbot endpoint for student questions - works with real students only"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+    
+    try:
+        # First, validate that the student exists in the database
+        student_data = get_student_data(request.student_id)
+        if not student_data:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Student {request.student_id} not found in the database. Please use a valid student ID."
+            )
+        
+        # Parse the question
+        parsed = parse_student_question(request.question)
+        intent = parsed["intent"]
+        
+        # Generate course recommendations if needed
+        recommendations = []
+        if intent in ["course_recommendation", "course_difficulty", "faculty_recommendation", "prerequisites"]:
+            recommendations = generate_course_recommendations(request.student_id, parsed.get("timeframe", "upcoming"))
+        
+        # Generate intelligent response using Gemini API
+        answer = await generate_gemini_response(request.question, student_data, recommendations, intent)
+        
+        # Calculate confidence based on data availability
+        confidence = 0.9 if recommendations else 0.7
+        
+        return ChatbotResponse(
+            student_id=request.student_id,
+            question=request.question,
+            answer=answer,
+            recommendations=recommendations,
+            confidence=confidence
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chatbot error: {e}")
+        raise HTTPException(status_code=500, detail=f"Chatbot error: {str(e)}")
+
+async def get_or_create_student_profile(student_id: str) -> Dict[str, Any]:
+    """Get student profile or create a basic one if it doesn't exist"""
+    if not driver:
+        return {"student_id": student_id, "learning_style": "Visual", "preferred_course_load": "Full-time", "degree": "General Studies", "completed_courses_count": 0}
+    
+    try:
+        with driver.session(database=NEO4J_DB) as session:
+            # First, check if student exists
+            student_check_query = """
+            MATCH (s:Student {id: $student_id})
+            OPTIONAL MATCH (s)-[:PURSUING]->(d:Degree)
+            OPTIONAL MATCH (s)-[:COMPLETED]->(completed:Course)
+            RETURN s.id as student_id,
+                   s.learningStyle as learning_style,
+                   s.preferredCourseLoad as preferred_course_load,
+                   s.preferredInstructionMode as instruction_mode,
+                   d.name as degree,
+                   count(completed) as completed_courses_count
+            """
+            
+            result = session.run(student_check_query, {"student_id": student_id})
+            student_record = result.single()
+            
+            if student_record:
+                return {
+                    "student_id": student_record["student_id"],
+                    "learning_style": student_record["learning_style"] or "Visual",
+                    "preferred_course_load": student_record["preferred_course_load"] or "Full-time",
+                    "instruction_mode": student_record["instruction_mode"] or "In-person",
+                    "degree": student_record["degree"] or "General Studies",
+                    "completed_courses_count": student_record["completed_courses_count"] or 0
+                }
+            else:
+                # Create a basic student profile
+                create_student_query = """
+                CREATE (s:Student {
+                    id: $student_id,
+                    learningStyle: 'Visual',
+                    preferredCourseLoad: 'Full-time',
+                    preferredInstructionMode: 'In-person',
+                    enrollmentDate: datetime(),
+                    expectedGraduation: datetime() + duration('P4Y')
+                })
+                RETURN s.id as student_id
+                """
+                session.run(create_student_query, {"student_id": student_id})
+                logger.info(f"Created new student profile for {student_id}")
+                
+                return {
+                    "student_id": student_id,
+                    "learning_style": "Visual",
+                    "preferred_course_load": "Full-time",
+                    "instruction_mode": "In-person",
+                    "degree": "General Studies",
+                    "completed_courses_count": 0
+                }
+                
+    except Exception as e:
+        logger.error(f"Error getting/creating student profile: {e}")
+        return {
+            "student_id": student_id,
+            "learning_style": "Visual",
+            "preferred_course_load": "Full-time",
+            "degree": "General Studies",
+            "completed_courses_count": 0
+        }
+
+@app.get("/api/chatbot/student-profile/{student_id}")
+async def get_student_profile(student_id: str):
+    """Get student profile for validation"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+    
+    try:
+        student_data = get_student_data(student_id)
+        if not student_data:
+            raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+        
+        return {
+            "student_id": student_id,
+            "degree": student_data.get("degree", "Not specified"),
+            "learning_style": student_data.get("learning_style", "Not specified"),
+            "completed_courses_count": len(student_data.get("completed_courses", [])),
+            "preferred_course_load": student_data.get("preferred_course_load", "Not specified"),
+            "instruction_mode": student_data.get("instruction_mode", "Not specified")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting student profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting student profile: {str(e)}")
+
+@app.get("/api/chatbot/similar-students/{student_id}")
+async def get_similar_students(student_id: str):
+    """Get similar students for a given student ID"""
+    if not driver:
+        raise HTTPException(status_code=503, detail="Neo4j database not available")
+    
+    try:
+        # First validate student exists
+        student_data = get_student_data(student_id)
+        if not student_data:
+            raise HTTPException(status_code=404, detail=f"Student {student_id} not found")
+        
+        # Get similar students
+        similar_students = find_similar_students(student_id, limit=5)
+        
+        return {
+            "student_id": student_id,
+            "similar_students": similar_students,
+            "total_found": len(similar_students)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting similar students: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting similar students: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
