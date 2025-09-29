@@ -1312,8 +1312,8 @@ async def get_dashboard_overview():
             "success_rate": 0,
             "at_risk_students": 0,
             "learning_style_completion": 0,
-            "avg_gpa": 3.2
-        }
+        "avg_gpa": 3.2
+    }
 
 @app.get("/dashboard/at-risk-students")
 async def get_at_risk_students():
@@ -1417,24 +1417,24 @@ async def get_at_risk_students():
     except Exception as e:
         logger.error(f"Error getting at-risk students: {e}")
         # Return fallback data
-        at_risk_students = [
-            {
-                "student_id": "ZO28124",
-                "name": "Alex Johnson",
-                "major": "Computer Science",
-                "risk_level": "high",
-                "current_gpa": 2.8,
-                "risk_factors": ["Low GPA", "Multiple Failed Courses"],
-                "recommendations": ["Immediate Advisor Meeting", "Academic Support Services"]
-            }
-        ]
-        
-        return {
+    at_risk_students = [
+        {
+            "student_id": "ZO28124",
+            "name": "Alex Johnson",
+            "major": "Computer Science",
+            "risk_level": "high",
+            "current_gpa": 2.8,
+            "risk_factors": ["Low GPA", "Multiple Failed Courses"],
+            "recommendations": ["Immediate Advisor Meeting", "Academic Support Services"]
+        }
+    ]
+    
+    return {
             "high_risk": 1,
             "medium_risk": 0,
             "low_risk": 0,
-            "students": at_risk_students
-        }
+        "students": at_risk_students
+    }
 
 
 @app.get("/dashboard/study-groups")
@@ -1590,22 +1590,22 @@ async def get_predictions():
             "early_warning_signals": {"count": 15, "description": "Students showing early signs of academic struggle", "recommended_action": "Immediate intervention"},
             "success_predictors": {"prerequisite_completion": {"success_rate": 89, "description": "Students with strong prerequisite completion show high success rate"}},
             "course_sequencing": {"improvement_potential": 12, "description": "Alternative course sequences could improve success rates"},
-            "success_probability_by_course": [
-                {"course": "CSEE 200", "probability": 89},
-                {"course": "MATH 151", "probability": 76},
-                {"course": "BIOL 141", "probability": 82},
-                {"course": "CSEE 201", "probability": 85},
-                {"course": "MATH 152", "probability": 71}
-            ],
-            "risk_factors": [
-                {"factor": "Low GPA", "percentage": 35},
-                {"factor": "Missing Prerequisites", "percentage": 25},
-                {"factor": "Course Load", "percentage": 20},
-                {"factor": "Attendance", "percentage": 15},
-                {"factor": "Other", "percentage": 5}
-            ]
-        }
-
+        "success_probability_by_course": [
+            {"course": "CSEE 200", "probability": 89},
+            {"course": "MATH 151", "probability": 76},
+            {"course": "BIOL 141", "probability": 82},
+            {"course": "CSEE 201", "probability": 85},
+            {"course": "MATH 152", "probability": 71}
+        ],
+        "risk_factors": [
+            {"factor": "Low GPA", "percentage": 35},
+            {"factor": "Missing Prerequisites", "percentage": 25},
+            {"factor": "Course Load", "percentage": 20},
+            {"factor": "Attendance", "percentage": 15},
+            {"factor": "Other", "percentage": 5}
+        ]
+    }
+    
 @app.get("/dashboard/realtime-analytics")
 async def get_realtime_analytics():
     """Get real-time analytics data for the dashboard"""
