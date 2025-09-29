@@ -242,14 +242,6 @@ We welcome contributions! Please feel free to:
 - Submit pull requests
 - Improve documentation
 
-## 📄 License
-
-This project is developed for educational purposes as part of the UMBC Hackathon 2025.
-
-## 👥 Team
-
-Developed by the UMBC student team for HackUMBC 2025, focusing on innovative solutions for academic success and student engagement.
-
 ---
 
 **Built with ❤️ for UMBC Students**
