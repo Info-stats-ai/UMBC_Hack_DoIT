@@ -75,7 +75,7 @@ main {
 .tool-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    border-color: #667eea;
+    border-color: #283593;
 }
 
 .tool-icon {
@@ -97,7 +97,7 @@ main {
 
 .tool-btn {
     display: inline-block;
-    background: #667eea;
+    background: #283593;
     color: white;
     padding: 0.75rem 2rem;
     border-radius: 25px;
@@ -191,7 +191,7 @@ main {
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #283593;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -227,7 +227,7 @@ button:disabled {
 
 .spinner {
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
+    border-top: 4px solid #283593;
     border-radius: 50%;
     width: 50px;
     height: 50px;
@@ -297,7 +297,7 @@ button:disabled {
 
 .confidence-score .score {
     font-weight: 700;
-    color: #667eea;
+    color: #283593;
 }
 
 .recommendations {
@@ -364,7 +364,7 @@ button:disabled {
     background: #f7fafc;
     padding: 20px;
     border-radius: 10px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #283593;
 }
 
 .info-card h4 {
@@ -432,7 +432,7 @@ footer {
 .option-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    border-color: #667eea;
+    border-color: #283593;
 }
 
 .option-icon {
@@ -895,7 +895,7 @@ footer {
     left: auto;
     right: -12px;
     border-right: none;
-    border-left: 12px solid #667eea;
+    border-left: 12px solid #283593;
     filter: drop-shadow(2px 0 4px rgba(102, 126, 234, 0.3));
 }
 
@@ -964,11 +964,11 @@ footer {
 
 /* Course item styling */
 .message-text h4 {
-    color: #667eea;
+    color: #283593;
     font-size: 1.1rem;
     margin: 16px 0 8px 0;
     padding: 8px 15px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #283593;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), transparent);
     border-radius: 0 10px 10px 0;
     font-weight: 600;
@@ -1009,7 +1009,7 @@ footer {
     left: 0;
     top: 8px;
     font-size: 1rem;
-    color: #667eea;
+    color: #283593;
     animation: twinkle 2s ease-in-out infinite;
 }
 
@@ -1019,7 +1019,7 @@ footer {
 }
 
 .message-text ul li:hover {
-    color: #667eea;
+    color: #283593;
     transform: translateX(5px);
 }
 
@@ -1035,7 +1035,7 @@ footer {
 .message-text strong {
     color: #2d3748;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #283593, #1a237e);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1074,7 +1074,7 @@ footer {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    background: linear-gradient(90deg, transparent, #283593, transparent);
 }
 
 .quick-btn {
@@ -1115,8 +1115,8 @@ footer {
 }
 
 .quick-btn:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #283593;
+    color: #283593;
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
     background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
@@ -1156,7 +1156,7 @@ footer {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    background: linear-gradient(90deg, transparent, #283593, transparent);
 }
 
 .chat-input {
@@ -1187,7 +1187,7 @@ footer {
 }
 
 .chat-input:focus-within {
-    border-color: #667eea;
+    border-color: #283593;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), 0 8px 30px rgba(102, 126, 234, 0.2);
     transform: translateY(-2px);
 }
@@ -1326,7 +1326,7 @@ footer {
 
 .loading-spinner i {
     font-size: 2rem;
-    color: #667eea;
+    color: #283593;
     margin-bottom: 15px;
 }
 

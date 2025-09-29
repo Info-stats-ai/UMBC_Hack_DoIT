@@ -19,7 +19,7 @@
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
                 <a href="/dashboard" class="nav-link">Dashboard</a>
-                <a href="/student-options" class="nav-link">Student Portal</a>
+                <a href="#" class="nav-link" onclick="goToStudentOptions()">Student Portal</a>
                 <a href="/study-groups" class="nav-link active">Study Groups</a>
             </div>
         </div>
@@ -65,7 +65,7 @@
                                 <label for="max-partners">Maximum Partners</label>
                                 <input type="number" id="max-partners" value="10" min="1" max="20">
                             </div>
-                            <button class="btn-primary" onclick="findStudyPartners()">
+                            <button class="btn-primary" onclick="alert('Button clicked!'); findStudyPartners();">
                                 <i class="fas fa-search"></i> Find Partners
                             </button>
                         </div>

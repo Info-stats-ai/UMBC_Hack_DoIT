@@ -592,7 +592,7 @@ if os.path.exists(frontend_path):
 # Neo4j connection
 NEO4J_URI = "bolt://127.0.0.1:7687"
 NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "Harsh@0603"  # Default password - change this to your Neo4j password
+NEO4J_PASSWORD = "umbctest123"  # Default password - change this to your Neo4j password
 NEO4J_DB = "neo4j"
 
 # Gemini API configuration

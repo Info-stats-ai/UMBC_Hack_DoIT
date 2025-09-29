@@ -7,7 +7,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     color: #333;
 }
@@ -46,7 +47,7 @@ body {
 
 .logo-section i {
     font-size: 2rem;
-    color: #667eea;
+    color: #283593;
 }
 
 .logo-section h1 {
@@ -66,7 +67,7 @@ body {
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: 500;
-    color: #667eea;
+    color: #283593;
 }
 
 .refresh-btn, .back-btn {
@@ -74,7 +75,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: #667eea;
+    background: #283593;
     color: white;
     border: none;
     border-radius: 20px;
@@ -145,7 +146,7 @@ body {
     display: flex;
     align-items: center;
     padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     color: white;
     border: none;
 }
@@ -228,7 +229,7 @@ body {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #283593;
 }
 
 .course-info h4 {
@@ -289,14 +290,14 @@ body {
 }
 
 .achievement-item:hover {
-    border-color: #667eea;
+    border-color: #283593;
     transform: translateY(-2px);
 }
 
 .achievement-item i {
     font-size: 2rem;
     margin-bottom: 1rem;
-    color: #667eea;
+    color: #283593;
 }
 
 .achievement-item h4 {
@@ -335,7 +336,7 @@ body {
 }
 
 .add-goal-btn {
-    background: #667eea;
+    background: #283593;
     color: white;
     border: none;
     padding: 0.5rem 1rem;
@@ -365,7 +366,7 @@ body {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #283593;
 }
 
 .goal-content {
@@ -400,7 +401,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #0c1445 0%, #1a237e 25%, #283593 50%, #3949ab 75%, #5c6bc0 100%);
     border-radius: 4px;
     transition: width 0.3s ease;
 }
@@ -408,7 +409,7 @@ body {
 .progress-text {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #667eea;
+    color: #283593;
     min-width: 40px;
 }
 
@@ -427,7 +428,7 @@ body {
 
 .edit-goal-btn {
     background: #f3f4f6;
-    color: #667eea;
+    color: #283593;
 }
 
 .edit-goal-btn:hover {
@@ -527,7 +528,7 @@ body {
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #283593;
 }
 
 .form-actions {
@@ -556,7 +557,7 @@ body {
 }
 
 .save-btn {
-    background: #667eea;
+    background: #283593;
     color: white;
 }
 
@@ -583,7 +584,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    color: #667eea;
+    color: #283593;
 }
 
 .loading-spinner i {

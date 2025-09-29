@@ -6,14 +6,38 @@ class StudyGroupsManager {
         this.students = [];
         this.currentPartners = [];
         this.currentGroups = [];
+        this.currentStudentId = this.getStudentIdFromURL();
         
         this.init();
+    }
+    
+    getStudentIdFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('studentId');
     }
     
     async init() {
         await this.loadCourses();
         await this.loadStudents();
         this.setupEventListeners();
+        this.prePopulateStudentId();
+    }
+    
+    prePopulateStudentId() {
+        if (this.currentStudentId) {
+            const studentIdField = document.getElementById('partner-student-id');
+            if (studentIdField) {
+                studentIdField.value = this.currentStudentId;
+            }
+        }
+    }
+    
+    goToStudentOptions() {
+        if (this.currentStudentId) {
+            window.location.href = `/student-options?studentId=${encodeURIComponent(this.currentStudentId)}`;
+        } else {
+            window.location.href = '/student-options';
+        }
     }
     
     async loadCourses() {
@@ -565,7 +589,14 @@ class StudyGroupsManager {
 
 // Global functions for onclick handlers
 function findStudyPartners() {
-    studyGroupsManager.findStudyPartners();
+    console.log('findStudyPartners called');
+    console.log('studyGroupsManager:', studyGroupsManager);
+    if (studyGroupsManager) {
+        studyGroupsManager.findStudyPartners();
+    } else {
+        console.error('studyGroupsManager not initialized');
+        alert('Study Groups Manager not initialized. Please refresh the page.');
+    }
 }
 
 function createStudyGroups() {
@@ -584,5 +615,21 @@ function closeGroupModal() {
 let studyGroupsManager;
 
 document.addEventListener('DOMContentLoaded', () => {
-    studyGroupsManager = new StudyGroupsManager();
+    console.log('DOM loaded, initializing StudyGroupsManager');
+    try {
+        studyGroupsManager = new StudyGroupsManager();
+        console.log('StudyGroupsManager initialized successfully:', studyGroupsManager);
+    } catch (error) {
+        console.error('Error initializing StudyGroupsManager:', error);
+        alert('Error initializing Study Groups Manager: ' + error.message);
+    }
 });
+
+// Global function for navigation
+function goToStudentOptions() {
+    if (studyGroupsManager) {
+        studyGroupsManager.goToStudentOptions();
+    } else {
+        window.location.href = '/student-options';
+    }
+}
